@@ -1,0 +1,570 @@
+{
+  "info": {
+    "name": "Nexus - Sankhya Compras",
+    "_postman_id": "nexus-sankhya-001",
+    "description": "Collection para explorar e mapear tabelas de Compras do Sankhya",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://api.sankhya.com.br",
+      "type": "string",
+      "description": "URL base do Sankhya - ALTERE PARA SUA URL"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string",
+      "description": "Token de sessão (preenchido após login)"
+    },
+    {
+      "key": "pedido_teste",
+      "value": "1167452",
+      "type": "string",
+      "description": "Número do pedido para testes"
+    }
+  ],
+  "item": [
+    {
+      "name": "01. Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.status === '1') {",
+                  "    var token = jsonData.responseBody.jsessionid.$;",
+                  "    pm.collectionVariables.set('token', token);",
+                  "    console.log('✅ Login OK! Token salvo.');",
+                  "} else {",
+                  "    console.log('❌ Erro no login: ' + jsonData.statusMessage);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceName\": \"MobileLoginSP.login\",\n  \"requestBody\": {\n    \"NOMUSU\": {\"$\": \"SEU_USUARIO\"},\n    \"INTERNO\": {\"$\": \"SUA_SENHA\"},\n    \"KEEPCONNECTED\": {\"$\": \"S\"}\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mge/service.sbr?serviceName=MobileLoginSP.login",
+              "host": ["{{base_url}}"],
+              "path": ["mge", "service.sbr"],
+              "query": [
+                {
+                  "key": "serviceName",
+                  "value": "MobileLoginSP.login"
+                }
+              ]
+            },
+            "description": "Faz login e salva o token automaticamente"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "JSESSIONID={{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/mge/service.sbr?serviceName=MobileLoginSP.logout",
+              "host": ["{{base_url}}"],
+              "path": ["mge", "service.sbr"],
+              "query": [
+                {
+                  "key": "serviceName",
+                  "value": "MobileLoginSP.logout"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02. Explorar Pedido {{pedido_teste}}",
+      "item": [
+        {
+          "name": "2.1 Cabeçalho do Pedido (TGFCAB)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "JSESSIONID={{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceName\": \"DbExplorerSP.executeQuery\",\n  \"requestBody\": {\n    \"sql\": \"SELECT * FROM TGFCAB WHERE NUNOTA = {{pedido_teste}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mge/service.sbr?serviceName=DbExplorerSP.executeQuery",
+              "host": ["{{base_url}}"],
+              "path": ["mge", "service.sbr"],
+              "query": [
+                {
+                  "key": "serviceName",
+                  "value": "DbExplorerSP.executeQuery"
+                }
+              ]
+            },
+            "description": "Busca o cabeçalho do pedido - todos os campos"
+          }
+        },
+        {
+          "name": "2.2 Itens do Pedido (TGFITE)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "JSESSIONID={{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceName\": \"DbExplorerSP.executeQuery\",\n  \"requestBody\": {\n    \"sql\": \"SELECT * FROM TGFITE WHERE NUNOTA = {{pedido_teste}} ORDER BY SEQUENCIA\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mge/service.sbr?serviceName=DbExplorerSP.executeQuery",
+              "host": ["{{base_url}}"],
+              "path": ["mge", "service.sbr"],
+              "query": [
+                {
+                  "key": "serviceName",
+                  "value": "DbExplorerSP.executeQuery"
+                }
+              ]
+            },
+            "description": "Busca os itens do pedido"
+          }
+        },
+        {
+          "name": "2.3 Dados do Fornecedor (TGFPAR)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "JSESSIONID={{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceName\": \"DbExplorerSP.executeQuery\",\n  \"requestBody\": {\n    \"sql\": \"SELECT p.* FROM TGFPAR p INNER JOIN TGFCAB c ON p.CODPARC = c.CODPARC WHERE c.NUNOTA = {{pedido_teste}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mge/service.sbr?serviceName=DbExplorerSP.executeQuery",
+              "host": ["{{base_url}}"],
+              "path": ["mge", "service.sbr"],
+              "query": [
+                {
+                  "key": "serviceName",
+                  "value": "DbExplorerSP.executeQuery"
+                }
+              ]
+            },
+            "description": "Busca dados do fornecedor vinculado ao pedido"
+          }
+        },
+        {
+          "name": "2.4 Tipo de Operação (TGFTOP)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "JSESSIONID={{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceName\": \"DbExplorerSP.executeQuery\",\n  \"requestBody\": {\n    \"sql\": \"SELECT t.* FROM TGFTOP t INNER JOIN TGFCAB c ON t.CODTIPOPER = c.CODTIPOPER AND t.DHALTER = c.DHALTER WHERE c.NUNOTA = {{pedido_teste}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mge/service.sbr?serviceName=DbExplorerSP.executeQuery",
+              "host": ["{{base_url}}"],
+              "path": ["mge", "service.sbr"],
+              "query": [
+                {
+                  "key": "serviceName",
+                  "value": "DbExplorerSP.executeQuery"
+                }
+              ]
+            },
+            "description": "Busca detalhes do tipo de operação"
+          }
+        },
+        {
+          "name": "2.5 Produtos do Pedido (TGFPRO)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "JSESSIONID={{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceName\": \"DbExplorerSP.executeQuery\",\n  \"requestBody\": {\n    \"sql\": \"SELECT p.CODPROD, p.DESCRPROD, p.REFERENCIA, p.MARCA, p.CODGRUPOPROD, i.QTDNEG, i.VLRUNIT, i.VLRTOT FROM TGFPRO p INNER JOIN TGFITE i ON p.CODPROD = i.CODPROD WHERE i.NUNOTA = {{pedido_teste}} ORDER BY i.SEQUENCIA\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mge/service.sbr?serviceName=DbExplorerSP.executeQuery",
+              "host": ["{{base_url}}"],
+              "path": ["mge", "service.sbr"],
+              "query": [
+                {
+                  "key": "serviceName",
+                  "value": "DbExplorerSP.executeQuery"
+                }
+              ]
+            },
+            "description": "Busca detalhes dos produtos do pedido"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03. Descobrir Estrutura",
+      "item": [
+        {
+          "name": "3.1 Colunas da TGFCAB",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "JSESSIONID={{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceName\": \"DbExplorerSP.executeQuery\",\n  \"requestBody\": {\n    \"sql\": \"SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'TGFCAB' ORDER BY ORDINAL_POSITION\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mge/service.sbr?serviceName=DbExplorerSP.executeQuery",
+              "host": ["{{base_url}}"],
+              "path": ["mge", "service.sbr"],
+              "query": [
+                {
+                  "key": "serviceName",
+                  "value": "DbExplorerSP.executeQuery"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "3.2 Colunas da TGFITE",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "JSESSIONID={{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceName\": \"DbExplorerSP.executeQuery\",\n  \"requestBody\": {\n    \"sql\": \"SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'TGFITE' ORDER BY ORDINAL_POSITION\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mge/service.sbr?serviceName=DbExplorerSP.executeQuery",
+              "host": ["{{base_url}}"],
+              "path": ["mge", "service.sbr"],
+              "query": [
+                {
+                  "key": "serviceName",
+                  "value": "DbExplorerSP.executeQuery"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "3.3 Tipos de Operação de COMPRA",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "JSESSIONID={{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceName\": \"DbExplorerSP.executeQuery\",\n  \"requestBody\": {\n    \"sql\": \"SELECT DISTINCT CODTIPOPER, DESCROPER, TIPMOV FROM TGFTOP WHERE CODTIPOPER IN (1001, 1301) OR DESCROPER LIKE '%COMPRA%' ORDER BY CODTIPOPER\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mge/service.sbr?serviceName=DbExplorerSP.executeQuery",
+              "host": ["{{base_url}}"],
+              "path": ["mge", "service.sbr"],
+              "query": [
+                {
+                  "key": "serviceName",
+                  "value": "DbExplorerSP.executeQuery"
+                }
+              ]
+            },
+            "description": "Lista tipos de operação 1001 (estoque) e 1301 (casada)"
+          }
+        },
+        {
+          "name": "3.4 Status possíveis (STATUSNOTA)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "JSESSIONID={{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceName\": \"DbExplorerSP.executeQuery\",\n  \"requestBody\": {\n    \"sql\": \"SELECT DISTINCT STATUSNOTA, COUNT(*) as QTD FROM TGFCAB WHERE CODTIPOPER IN (1001, 1301) GROUP BY STATUSNOTA ORDER BY QTD DESC\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mge/service.sbr?serviceName=DbExplorerSP.executeQuery",
+              "host": ["{{base_url}}"],
+              "path": ["mge", "service.sbr"],
+              "query": [
+                {
+                  "key": "serviceName",
+                  "value": "DbExplorerSP.executeQuery"
+                }
+              ]
+            },
+            "description": "Descobre quais status existem nos pedidos de compra"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04. Pendências de Compras",
+      "item": [
+        {
+          "name": "4.1 Pedidos PENDENTES (últimos 90 dias)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "JSESSIONID={{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceName\": \"DbExplorerSP.executeQuery\",\n  \"requestBody\": {\n    \"sql\": \"SELECT c.NUNOTA, c.NUMNOTA, c.DTNEG, c.DTPREVENT, c.CODPARC, p.NOMEPARC, c.CODTIPOPER, c.VLRNOTA, c.STATUSNOTA, c.CODEMP, c.OBSERVACAO FROM TGFCAB c INNER JOIN TGFPAR p ON c.CODPARC = p.CODPARC WHERE c.CODTIPOPER IN (1001, 1301) AND c.STATUSNOTA NOT IN ('L', 'F') AND c.DTNEG >= DATEADD(DAY, -90, GETDATE()) ORDER BY c.DTNEG DESC\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mge/service.sbr?serviceName=DbExplorerSP.executeQuery",
+              "host": ["{{base_url}}"],
+              "path": ["mge", "service.sbr"],
+              "query": [
+                {
+                  "key": "serviceName",
+                  "value": "DbExplorerSP.executeQuery"
+                }
+              ]
+            },
+            "description": "Lista pedidos de compra que NÃO estão Liberados ou Finalizados"
+          }
+        },
+        {
+          "name": "4.2 Resumo por Status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "JSESSIONID={{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceName\": \"DbExplorerSP.executeQuery\",\n  \"requestBody\": {\n    \"sql\": \"SELECT c.STATUSNOTA, COUNT(*) as QTD_PEDIDOS, SUM(c.VLRNOTA) as VALOR_TOTAL FROM TGFCAB c WHERE c.CODTIPOPER IN (1001, 1301) AND c.DTNEG >= DATEADD(DAY, -90, GETDATE()) GROUP BY c.STATUSNOTA ORDER BY QTD_PEDIDOS DESC\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mge/service.sbr?serviceName=DbExplorerSP.executeQuery",
+              "host": ["{{base_url}}"],
+              "path": ["mge", "service.sbr"],
+              "query": [
+                {
+                  "key": "serviceName",
+                  "value": "DbExplorerSP.executeQuery"
+                }
+              ]
+            },
+            "description": "Agrupa pedidos por status"
+          }
+        },
+        {
+          "name": "4.3 Resumo por Fornecedor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "JSESSIONID={{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceName\": \"DbExplorerSP.executeQuery\",\n  \"requestBody\": {\n    \"sql\": \"SELECT TOP 20 p.CODPARC, p.NOMEPARC, COUNT(*) as QTD_PEDIDOS, SUM(c.VLRNOTA) as VALOR_TOTAL FROM TGFCAB c INNER JOIN TGFPAR p ON c.CODPARC = p.CODPARC WHERE c.CODTIPOPER IN (1001, 1301) AND c.STATUSNOTA NOT IN ('L', 'F') AND c.DTNEG >= DATEADD(DAY, -90, GETDATE()) GROUP BY p.CODPARC, p.NOMEPARC ORDER BY VALOR_TOTAL DESC\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mge/service.sbr?serviceName=DbExplorerSP.executeQuery",
+              "host": ["{{base_url}}"],
+              "path": ["mge", "service.sbr"],
+              "query": [
+                {
+                  "key": "serviceName",
+                  "value": "DbExplorerSP.executeQuery"
+                }
+              ]
+            },
+            "description": "Top 20 fornecedores com pendências"
+          }
+        },
+        {
+          "name": "4.4 Pedidos ATRASADOS (prev < hoje)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "JSESSIONID={{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceName\": \"DbExplorerSP.executeQuery\",\n  \"requestBody\": {\n    \"sql\": \"SELECT c.NUNOTA, c.NUMNOTA, c.DTNEG, c.DTPREVENT, DATEDIFF(DAY, c.DTPREVENT, GETDATE()) as DIAS_ATRASO, p.NOMEPARC, c.VLRNOTA, c.STATUSNOTA FROM TGFCAB c INNER JOIN TGFPAR p ON c.CODPARC = p.CODPARC WHERE c.CODTIPOPER IN (1001, 1301) AND c.STATUSNOTA NOT IN ('L', 'F') AND c.DTPREVENT < GETDATE() AND c.DTPREVENT IS NOT NULL ORDER BY DIAS_ATRASO DESC\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mge/service.sbr?serviceName=DbExplorerSP.executeQuery",
+              "host": ["{{base_url}}"],
+              "path": ["mge", "service.sbr"],
+              "query": [
+                {
+                  "key": "serviceName",
+                  "value": "DbExplorerSP.executeQuery"
+                }
+              ]
+            },
+            "description": "Pedidos com data prevista ultrapassada"
+          }
+        }
+      ]
+    },
+    {
+      "name": "05. Query Livre",
+      "item": [
+        {
+          "name": "Executar SQL",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "JSESSIONID={{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceName\": \"DbExplorerSP.executeQuery\",\n  \"requestBody\": {\n    \"sql\": \"SELECT TOP 10 * FROM TGFCAB WHERE CODTIPOPER IN (1001, 1301) ORDER BY DTNEG DESC\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mge/service.sbr?serviceName=DbExplorerSP.executeQuery",
+              "host": ["{{base_url}}"],
+              "path": ["mge", "service.sbr"],
+              "query": [
+                {
+                  "key": "serviceName",
+                  "value": "DbExplorerSP.executeQuery"
+                }
+              ]
+            },
+            "description": "Use esta request para testar qualquer SQL"
+          }
+        }
+      ]
+    }
+  ]
+}
