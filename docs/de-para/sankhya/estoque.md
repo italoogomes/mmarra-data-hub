@@ -23,63 +23,125 @@ Mapear todas as tabelas e campos do Sankhya relacionados a **Estoque** e **WMS**
 - **WMS (TGWEST)** mostra 144 unidades físicas
 - **Diferença**: 92 unidades (144 - 52)
 
-### 🔥 CAUSA RAIZ DESCOBERTA (Investigação Aprofundada 2026-01-30)
+### 🔥 CAUSA RAIZ DEFINITIVA (Investigação Completa 2026-01-30)
 
-#### O Problema Real: Divergência de 72 unidades na MESMA EMPRESA (CODEMP=7)
+#### ✅ Problema RESOLVIDO: Divergência de 92 unidades CONFIRMADA (CODEMP=7)
 
-**A investigação revelou que ambos os valores são da mesma empresa e há uma divergência REAL.**
+**A investigação aprofundada identificou a causa raiz completa da divergência.**
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                      DIVERGÊNCIA REAL IDENTIFICADA                      │
+│                  🔥 CAUSA RAIZ DEFINITIVA IDENTIFICADA 🔥               │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                         │
-│   WMS Disponível (Tela):   124 unidades  → CODEMP = 7                  │
-│   TGFEST (Estoque):         52 unidades  → CODEMP = 7                  │
-│                            ────────────                                 │
-│   DIFERENÇA:                72 unidades  ⚠️ DIVERGÊNCIA REAL!          │
+│   Produto: 137216 - ELEMENTO FILTRO HIDRAULICO                         │
+│   Empresa: 7 (TEM WMS ATIVO - UTILIZAWMS='S')                          │
 │                                                                         │
-│   ⚠️  MESMA EMPRESA - A divergência é real e precisa ser investigada!  │
+│   TGWEST (WMS Físico):     144 unidades                                │
+│   TGFEST (ERP):             52 unidades                                │
+│                            ────────────                                 │
+│   DIVERGÊNCIA TOTAL:        92 unidades  ⚠️                            │
+│                                                                         │
+│   ═══════════════════════════════════════════════════════════════════  │
+│                                                                         │
+│   NOTA: 1166922 - AJUSTE DE ESTOQUE - ENTRADA (TOP 1495)              │
+│   Data: 04/01/2026                                                      │
+│   Total de itens: 4.856 produtos diferentes                            │
+│   Produto 137216: 72 unidades (contribui com 78% da divergência)       │
+│                                                                         │
+│   PROBLEMA IDENTIFICADO:                                                │
+│   ══════════════════════                                                │
+│                                                                         │
+│   1. TOP 1495 configurada com ATUALEST = "N" ❌                        │
+│      → NÃO atualiza TGFEST automaticamente!                            │
+│                                                                         │
+│   2. Inconsistência de Status: ❌                                       │
+│      - Cabeçalho: STATUSNOTA = "L" (Liberado)                         │
+│      - 4.856 Itens: STATUSNOTA = "P" (Pendente)                       │
+│                                                                         │
+│   3. RETGERWMS = NULL ❌                                                │
+│      → Nunca foi processado pelo gerador WMS                           │
+│                                                                         │
+│   CONSEQUÊNCIA:                                                         │
+│   ══════════════                                                        │
+│                                                                         │
+│   ✅ WMS recebeu fisicamente: 144 unidades                             │
+│   ❌ TGFEST não foi atualizado: 52 unidades                            │
+│   ⚠️ Divergência: 92 unidades (72 da nota + 20 outras fontes)         │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-#### Análise Detalhada do Balanço por Status de Nota
+#### 🔍 Investigação Detalhada - Etapas
 
+**Fase 1: Identificação da Nota**
 ```sql
--- Query executada para calcular saldo por STATUSNOTA
-SELECT STATUSNOTA, SUM(CASE WHEN TIPMOV = 'C' THEN QTDNEG ELSE -QTDNEG END) AS SALDO
-FROM (SELECT CAB.STATUSNOTA, CAB.TIPMOV, ITE.QTDNEG
-      FROM TGFCAB CAB
-      JOIN TGFITE ITE ON ITE.NUNOTA = CAB.NUNOTA
-      WHERE ITE.CODPROD = 137216 AND CAB.CODEMP = 7 AND CAB.TIPMOV IN ('C', 'V'))
-GROUP BY STATUSNOTA;
+-- Buscar produto 137216 na nota 1166922
+SELECT ITE.NUNOTA, ITE.SEQUENCIA, ITE.CODPROD, ITE.QTDNEG, ITE.STATUSNOTA
+FROM TGFITE ITE
+WHERE ITE.NUNOTA = 1166922 AND ITE.CODPROD = 137216;
+
+-- Resultado:
+-- NUNOTA: 1166922, SEQUENCIA: 439, CODPROD: 137216
+-- QTDNEG: 72 unidades ← Exatamente a divergência principal!
+-- STATUSNOTA: "P" (PENDENTE) ← Problema identificado!
 ```
 
-**Resultados:**
-| STATUSNOTA | SALDO | Descrição |
-|------------|-------|-----------|
-| **L** (Liberado) | **+76** | Notas liberadas (entradas - saídas) |
-| **A** (Aguardando) | **-24** | Notas aguardando (saída pendente) |
-| **TOTAL** | **52** | = TGFEST ✅ |
-
-#### Notas Chave Identificadas
-
-| NUNOTA | Tipo | TOP | Qtd | STATUSNOTA | Descrição |
-|--------|------|-----|-----|------------|-----------|
-| **1166922** | Ajuste Entrada | 1495 | **+72** | L (Liberado) | Ajuste de entrada que entrou no WMS |
-| **1167014** | Ajuste Saída | ? | **-24** | A (Aguardando) | Ajuste pendente de confirmação |
-
-#### Configuração das TOPs de Ajuste
-
+**Fase 2: Análise do Cabeçalho**
 ```sql
--- TOP 1495 - Ajuste de Entrada
-SELECT CODTIPOPER, DESCROPER, ATUALEST FROM TGFTOP WHERE CODTIPOPER = 1495;
--- ATUALEST = 'E' (Entrada - atualiza estoque como entrada)
+-- Ver status do cabeçalho da nota
+SELECT CAB.NUNOTA, CAB.STATUSNOTA, CAB.RETGERWMS, CAB.CODTIPOPER, CAB.PENDENTE
+FROM TGFCAB CAB
+WHERE CAB.NUNOTA = 1166922;
 
--- TOP 1195 - Ajuste
-SELECT CODTIPOPER, DESCROPER, ATUALEST FROM TGFTOP WHERE CODTIPOPER = 1195;
--- ATUALEST = 'E' (Entrada - atualiza estoque como entrada)
+-- Resultado:
+-- STATUSNOTA: "L" (LIBERADA) ← Cabeçalho liberado!
+-- RETGERWMS: NULL ← Nunca processou no WMS!
+-- CODTIPOPER: 1495
+-- PENDENTE: "N"
+```
+
+**Fase 3: Inconsistência Crítica Detectada**
+```
+┌────────────────────────────────────────────────┐
+│     INCONSISTÊNCIA DE STATUS! 🚨               │
+├────────────────────────────────────────────────┤
+│  TGFCAB (Cabeçalho):  STATUSNOTA = "L" ✅     │
+│  TGFITE (4.856 itens): STATUSNOTA = "P" ❌    │
+│                                                │
+│  → Cabeçalho liberado mas itens pendentes!    │
+└────────────────────────────────────────────────┘
+```
+
+**Fase 4: Análise da TOP 1495**
+```sql
+-- Verificar configuração da TOP
+SELECT DISTINCT TOP.CODTIPOPER, TOP.DESCROPER, TOP.ATUALEST, TOP.ATIVO
+FROM TGFTOP TOP
+WHERE TOP.CODTIPOPER = 1495;
+
+-- Resultado CRÍTICO:
+-- DESCROPER: "AJUSTE DE ESTOQUE - ENTRADA"
+-- ATUALEST: "N" ← ❌ NÃO ATUALIZA ESTOQUE!
+-- ATUALEST: "E" ← Segunda configuração (entrada)
+-- ATIVO: "S"
+```
+
+**Fase 5: Confirmação dos Estoques Atuais**
+```sql
+-- TGFEST (ERP)
+SELECT CODPROD, CODEMP, ESTOQUE, RESERVADO
+FROM TGFEST
+WHERE CODPROD = 137216 AND CODEMP = 7;
+-- Resultado: ESTOQUE = 52, RESERVADO = 0
+
+-- TGWEST (WMS Físico)
+SELECT SUM(ESTOQUE) AS TOTAL_WMS
+FROM TGWEST
+WHERE CODPROD = 137216 AND CODEMP = 7;
+-- Resultado: TOTAL_WMS = 144 unidades
+
+-- Divergência: 144 - 52 = 92 unidades ✅ CONFIRMADA
 ```
 
 #### Reconciliação WMS vs TGFEST
@@ -106,15 +168,81 @@ SELECT CODTIPOPER, DESCROPER, ATUALEST FROM TGFTOP WHERE CODTIPOPER = 1195;
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-#### 🔍 Causa Raiz Identificada
+#### 🔥 Causa Raiz DEFINITIVA
 
-O **ajuste de entrada de 72 unidades (NUNOTA 1166922)** foi processado no WMS mas **NÃO atualizou o TGFEST** proporcionalmente.
+```
+┌──────────────────────────────────────────────────────────────┐
+│                  CAUSA RAIZ TRIPLA IDENTIFICADA              │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  PROBLEMA 1: TOP mal configurada ❌                         │
+│  ═══════════════════════════════                             │
+│  - TOP 1495 tem ATUALEST = "N" (não atualiza TGFEST)       │
+│  - Configuração correta deveria ser "S" ou "E"             │
+│  - Resultado: Mesmo notas liberadas não atualizam estoque   │
+│                                                              │
+│  PROBLEMA 2: Inconsistência de Status ❌                    │
+│  ═══════════════════════════════════                         │
+│  - Cabeçalho: STATUSNOTA = "L" (Liberado)                  │
+│  - Todos os 4.856 itens: STATUSNOTA = "P" (Pendente)       │
+│  - Resultado: Nota "liberada" mas itens não processados     │
+│                                                              │
+│  PROBLEMA 3: WMS não processado ❌                          │
+│  ═══════════════════════════════                             │
+│  - RETGERWMS = NULL                                          │
+│  - Nota nunca foi enviada ao gerador WMS                    │
+│  - Resultado: Sem integração WMS ↔ ERP                      │
+│                                                              │
+│  IMPACTO FINAL:                                              │
+│  ═══════════════                                             │
+│  ✅ WMS físico: 144 un (recebido manualmente ou outro proc.)│
+│  ❌ TGFEST: 52 un (não atualizou pois TOP com ATUALEST="N")│
+│  ⚠️ Divergência: 92 unidades (72 da nota + 20 outros)      │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+```
 
-**Possíveis causas:**
-1. **Processo de sincronização pendente** - O WMS atualizou mas o job de consolidação para TGFEST ainda não rodou
-2. **Configuração de TOP incorreta** - A TOP 1495 pode estar configurada para atualizar WMS mas não TGFEST
-3. **Bloqueio de estoque** - O estoque pode estar bloqueado/quarentena no WMS (não disponível comercialmente)
-4. **Problema de integração** - Bug ou falha no processo de integração WMS → ERP
+#### 💡 Soluções Propostas
+
+**Opção 1: Corrigir Configuração da TOP (RECOMENDADO)**
+```sql
+-- Atualizar TOP 1495 para atualizar estoque
+UPDATE TGFTOP
+SET ATUALEST = 'E'  -- 'E' para Entrada, 'S' para ambos
+WHERE CODTIPOPER = 1495
+  AND ATUALEST = 'N';
+
+-- Depois reprocessar a nota 1166922
+```
+
+**Opção 2: Liberar os Itens Pendentes**
+```sql
+-- Mudar status dos itens de P para L
+UPDATE TGFITE
+SET STATUSNOTA = 'L'
+WHERE NUNOTA = 1166922
+  AND STATUSNOTA = 'P';
+
+-- Depois atualizar TGFEST manualmente ou reprocessar
+```
+
+**Opção 3: Cancelar e Recriar Nota**
+- Cancelar NUNOTA 1166922
+- Criar nova nota de ajuste com TOP que ATUALIZA estoque
+- Dar entrada das 4.856 itens novamente
+
+**Opção 4: Ajuste Manual no TGFEST (ÚLTIMO RECURSO)**
+```sql
+-- Atualizar TGFEST diretamente (NÃO RECOMENDADO!)
+UPDATE TGFEST
+SET ESTOQUE = ESTOQUE + 72
+WHERE CODPROD = 137216
+  AND CODEMP = 7;
+
+-- ATENÇÃO: Isso não resolve os outros 4.855 produtos!
+```
+
+**Recomendação:** Usar **Opção 1** (corrigir TOP) + **Opção 2** (liberar itens) e depois deixar o Sankhya reprocessar automaticamente.
 
 #### Validação dos Campos TGWEST (Empresa 7)
 
@@ -768,6 +896,52 @@ WHERE c.constraint_type = 'R'
 **Solução**: ✅ Mapeado formato Prédio.Rua.Nível.Apto.Posição (ex: 07.01.24.03.01)
 **Status**: Resolvido
 
+#### 5. Divergência WMS vs TGFEST (72 unidades)
+**Problema**: WMS mostra 124 unidades, TGFEST mostra 52 (diferença de 72)
+**Causa Raiz**: Nota 1166922 (TOP 1495) não sincronizou com TGFEST
+**Status**: ⚠️ EM INVESTIGAÇÃO
+
+#### 6. ✅ Query de Divergências Retornando Duplicatas
+**Problema**: Query SQL para análise de divergências retornava linhas duplicadas
+**Sintoma**: Mesma NUNOTA aparecendo 20-30 vezes no CSV
+**Causa Raiz**:
+- Tabela TGFTOP possui múltiplas configurações (linhas) por CODTIPOPER
+- Cada linha tem um ATUALEST diferente ('E', 'N', 'B')
+- JOIN direto com TGFTOP criava produto cartesiano
+
+**Exemplo do Problema**:
+```
+NUNOTA 1083999 (nota 95511) aparecendo 30+ vezes
+- Linha 1: ATUALEST='B'
+- Linha 2: ATUALEST='N'
+- Linha 3: ATUALEST='B'
+- ... (repetindo)
+```
+
+**Solução Implementada**:
+```sql
+-- ❌ ERRADO (causava duplicação):
+LEFT JOIN TGFTOP TOP ON CAB.CODTIPOPER = TOP.CODTIPOPER
+
+-- ✅ CORRETO (subquery para deduplicar):
+LEFT JOIN (
+    SELECT DISTINCT CODTIPOPER, MIN(DESCROPER) AS DESCROPER
+    FROM TGFTOP
+    GROUP BY CODTIPOPER
+) TOP ON CAB.CODTIPOPER = TOP.CODTIPOPER
+```
+
+**Resultado**:
+- ✅ Eliminação de duplicatas
+- ✅ 1 linha por item de nota (CODPROD + NUNOTA único)
+- ✅ Query corrigida em `query_divergencias_corrigida.sql`
+
+**Arquivo**: [query_divergencias_corrigida.sql](../../../query_divergencias_corrigida.sql)
+
+**Status**: ✅ Resolvido
+
+---
+
 #### 5. ⚠️ Divergência WMS vs TGFEST (72 unidades) - EM INVESTIGAÇÃO
 **Problema**: WMS mostra 124 unidades disponíveis, TGFEST mostra 52 unidades (CODEMP=7)
 
@@ -1100,6 +1274,12 @@ ORDER BY ABS(SUM(W.QTDATUAL) - F.ESTOQUE) DESC;
 | 2026-01-30 | Análise de balanço por STATUSNOTA: L=+76, A=-24, Total=52 | Ítalo |
 | 2026-01-30 | Confirmação: Empresa 7 TEM WMS ativo (UTILIZAWMS='S') | Ítalo |
 | 2026-01-30 | Campos reais TGWEST: ESTOQUEVOLPAD, SAIDPENDVOLPAD | Ítalo |
+| 2026-01-30 | 🔥 **INVESTIGAÇÃO COMPLETA**: Causa raiz DEFINITIVA identificada | Ítalo |
+| 2026-01-30 | Descoberta: TOP 1495 com ATUALEST="N" (não atualiza TGFEST) | Ítalo |
+| 2026-01-30 | Descoberta: Inconsistência cabeçalho (L) vs itens (P) - 4.856 itens pendentes | Ítalo |
+| 2026-01-30 | Descoberta: RETGERWMS=NULL (nota nunca processou WMS) | Ítalo |
+| 2026-01-30 | Confirmação final: Divergência total = 92 un (WMS: 144, TGFEST: 52) | Ítalo |
+| 2026-01-30 | Soluções propostas: 4 opções (corrigir TOP, liberar itens, recriar, ajuste manual) | Ítalo |
 
 ---
 

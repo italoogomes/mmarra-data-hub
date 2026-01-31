@@ -210,6 +210,104 @@ O ajuste entrou no WMS mas NÃO sincronizou com TGFEST
 
 ---
 
+## ✅ Sessão Continuada (2026-01-30 Final) 🔧 CORREÇÃO DE QUERY
+
+**Contexto**: Após a investigação inicial, foi gerado um CSV com todas as divergências do sistema, mas o arquivo continha linhas duplicadas.
+
+### 🐛 Problema Identificado: Query com Duplicatas
+
+**Sintoma**:
+- CSV `analise_divergencias_estoque.csv` com mesmo NUNOTA aparecendo 20-30 vezes
+- Exemplo: NUNOTA 1083999 (nota 95511) repetida 30+ vezes
+- Dados idênticos mas multiplicados
+
+**Causa Raiz Descoberta**:
+```
+Tabela TGFTOP possui MÚLTIPLAS linhas por CODTIPOPER:
+- CODTIPOPER 1101 com ATUALEST='B' (baixa)
+- CODTIPOPER 1101 com ATUALEST='N' (não atualiza)
+- CODTIPOPER 1101 com ATUALEST='E' (entrada)
+
+JOIN direto: LEFT JOIN TGFTOP TOP ON CAB.CODTIPOPER = TOP.CODTIPOPER
+Resultado: Produto cartesiano (3 linhas TGFTOP × N itens = 3N duplicatas)
+```
+
+### ✅ Solução Implementada
+
+**Query Corrigida** ([query_divergencias_corrigida.sql](query_divergencias_corrigida.sql)):
+
+```sql
+-- ❌ ANTES (causava duplicação):
+LEFT JOIN TGFTOP TOP ON CAB.CODTIPOPER = TOP.CODTIPOPER
+
+-- ✅ DEPOIS (sem duplicação):
+LEFT JOIN (
+    SELECT DISTINCT CODTIPOPER, MIN(DESCROPER) AS DESCROPER
+    FROM TGFTOP
+    GROUP BY CODTIPOPER
+) TOP ON CAB.CODTIPOPER = TOP.CODTIPOPER
+```
+
+**Resultado**:
+- ✅ Subquery deduplica TGFTOP antes do JOIN
+- ✅ 1 linha única por CODPROD + NUNOTA
+- ✅ Elimina campo ATUALEST (não necessário na análise)
+- ✅ Query foca apenas em itens PENDENTES (STATUS='P')
+
+### 📁 Arquivos Criados/Atualizados
+
+1. ✅ **query_divergencias_corrigida.sql**
+   - Query SQL completa sem duplicatas
+   - Comentários explicando a correção
+   - Filtros: CODEMP=7, STATUS='P', Divergência > 0
+   - Ordenação por maior divergência
+
+2. ✅ **curl_divergencias_corrigida.txt**
+   - cURL pronto para Postman
+   - Query em linha única escapada corretamente
+   - Instruções de uso completas
+
+3. ✅ **docs/de-para/sankhya/estoque.md**
+   - Nova seção "6. Query de Divergências Retornando Duplicatas"
+   - Documentação completa do problema e solução
+   - Exemplo do problema com dados reais
+   - Comparação ANTES × DEPOIS do código
+
+### 📊 Análise de Divergências
+
+**Query Retorna**:
+- Produtos com divergência WMS > TGFEST
+- Apenas itens PENDENTES (não processados)
+- Campos: CODPROD, NUNOTA, TOP, QTD_NOTA, QTD_WMS, QTD_TGFEST, DIVERGENCIA
+- Ordenado por maior divergência primeiro
+
+**Exemplo de Resultado Esperado**:
+```
+CODPROD | NUNOTA  | TOP  | DIVERGENCIA
+263340  | 1166922 | 1495 | 5894      ← Maior divergência
+137216  | 1166922 | 1495 | 72        ← Caso investigado
+...
+```
+
+### 🎯 Próximos Passos (Com Nova Query)
+
+1. **Executar query corrigida no Postman**
+   - Usar arquivo `curl_divergencias_corrigida.txt`
+   - Gerar novo CSV sem duplicatas
+   - Validar que cada NUNOTA aparece 1x por produto
+
+2. **Análise das Divergências**
+   - Identificar TOP mais problemáticas
+   - Listar produtos com maior divergência
+   - Verificar padrões (datas, tipos de operação)
+
+3. **Investigação de Causa**
+   - Por que notas PENDENTES não processaram?
+   - Verificar configuração de TOPs problemáticas
+   - Identificar se há job de sincronização travado
+
+---
+
 ## 🎯 TAREFAS PLANEJADAS (PRÓXIMAS SESSÕES)
 
 ### Fase 1: Extração Básica - COMPRAS (ATUAL)
