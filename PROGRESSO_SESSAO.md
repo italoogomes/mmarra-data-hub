@@ -1,159 +1,143 @@
 # 📊 Progresso da Sessão - MMarra Data Hub
 
 **Data:** 2026-02-01
-**Última Atualização:** 2026-02-01 🔧 TESTE MCP - CORREÇÃO AUTENTICAÇÃO PENDENTE
-**Versão Atual:** v0.4.1 - Servidor MCP em Correção
+**Última Atualização:** 2026-02-01 ✅ URLs MCP CORRIGIDAS - Aguardando Servidor Sankhya
+**Versão Atual:** v0.4.2 - MCP Parcialmente Funcional (OAuth OK, Queries Bloqueadas)
 
 ---
 
-## 🔧 SESSÃO ATUAL (2026-02-01) - Teste do Servidor MCP
+## 🔧 SESSÃO ATUAL (2026-02-01) - Teste e Correção do Servidor MCP
 
 ### 📋 Objetivo
 Testar o servidor MCP criado anteriormente e validar se consegue executar queries SQL via API Sankhya.
 
-### ⚠️ Problema Identificado: Autenticação OAuth 2.0 Falhando
+### ✅ Progresso Realizado
 
-**Erro encontrado:**
-```json
-{
-  "codigo": "GTW2510",
-  "descricao": "O Header Authorization é obrigatório para esta requisição."
-}
-```
+#### 1. URLs Corrigidas
+- ✅ **Autenticação**: `https://api.sankhya.com.br/authenticate` (sem /gateway/v1)
+- ✅ **Queries**: `https://api.sankhya.com.br/gateway/v1/mge/service.sbr`
+- ✅ Código atualizado em [mcp_sankhya/server.py](mcp_sankhya/server.py:31-32)
 
-**Status:** ❌ Autenticação não funcionando
+#### 2. Autenticação OAuth 2.0
+- ✅ Token obtido com sucesso
+- ✅ Endpoint `/authenticate` funciona corretamente
+- ⚠️ Query retorna "Não autorizado" (possível problema no servidor Sankhya)
 
-**Causa raiz identificada:**
-- Código MCP usa: `https://api.sankhya.com.br/gateway/v1/authenticate`
-- Postman pode usar URL diferente: `{{base_url}}/authenticate`
-- Possível que o endpoint correto seja sem `/gateway/v1/`
-
-### 📊 Investigação Realizada
-
-#### 1. Teste de Instalação do MCP
-- ✅ Pacote MCP instalado corretamente (`import mcp.server` funciona)
-- ✅ Servidor MCP criado em `mcp_sankhya/server.py`
-- ✅ Documentação completa criada (GUIA_RAPIDO_MCP.md)
-
-#### 2. Análise dos Métodos de Autenticação
-Descobrimos que há **dois métodos** no projeto:
-
-**Método 1: MobileLogin (Collection antiga)**
-```javascript
-POST https://api.sankhya.com.br/mge/service.sbr?serviceName=MobileLoginSP.login
-Body: { "NOMUSU": "usuario", "INTERNO": "senha" }
-Retorna: JSESSIONID (usado como Cookie)
-```
-
-**Método 2: OAuth 2.0 (Collection nova + MCP)**
-```javascript
-POST {{base_url}}/authenticate
-Headers:
-  - Content-Type: application/x-www-form-urlencoded
-  - X-Token: {{app_key}}
-Body:
-  - client_id: {{client_id}}
-  - client_secret: {{client_secret}}
-  - grant_type: client_credentials
-Retorna: Bearer token
-```
-
-**Usuário confirmou:** Usa **Método 2 (OAuth 2.0)** no Postman
-
-#### 3. Diferença Crítica Encontrada
-
-| Local | URL Autenticação |
-|-------|------------------|
-| **Código MCP** | `https://api.sankhya.com.br/gateway/v1/authenticate` |
-| **Postman** | `{{base_url}}/authenticate` (base_url = ?) |
-
-**Pendente:** Verificar valor exato de `{{base_url}}` no Postman
+#### 3. Documentação Oficial Consultada
+- ✅ [Autenticação OAuth 2.0](https://developer.sankhya.com.br/reference/post_authenticate)
+- ✅ [DbExplorerSP.executeQuery](https://developer.sankhya.com.br/reference/requisi%C3%A7%C3%B5es-via-gateway)
+- ✅ Confirmado: Método OAuth 2.0 Client Credentials é correto
+- ⚠️ Limitação: DbExplorer tem limite de 5.000 registros por query
 
 #### 4. Arquivos Criados Nesta Sessão
 
+**Scripts de Teste:**
 1. ✅ **test_mcp.py** - Script de teste do servidor MCP
-   - Tenta executar query de divergências V3
-   - Falhou com erro 401 (autenticação)
+2. ✅ **test_autenticacao.py** - Diagnóstico completo de autenticação
+3. ✅ **test_mobile_login.py** - Teste alternativo com usuário/senha (JSESSIONID)
+4. ✅ **mcp_sankhya/.env** - Credenciais OAuth 2.0 configuradas
 
-2. ✅ **test_autenticacao.py** - Script de diagnóstico de autenticação
-   - Testa OAuth 2.0 automaticamente
-   - Oferece teste de MobileLogin (usuário/senha)
-   - Identifica qual método funciona
+**Documentação de Estrutura:**
+5. ✅ **ANALISE_ESTRUTURA.md** - Análise completa do projeto (6/10)
+   - Avaliação de todos componentes (documentação, queries, MCP, Data Lake, etc.)
+   - Identificação de gaps críticos (scripts extração, Data Lake, agentes IA)
+   - Roadmap em 3 fases para MVP (2-3 semanas)
+   - Recomendações técnicas (Azure Data Lake, LangChain)
+6. ✅ **CHANGELOG.md** - Atualizado para v0.4.2
+7. ✅ **PROGRESSO_SESSAO.md** - Atualizado com esta sessão
+8. ❌ **PROXIMOS_PASSOS.md** - Removido (conteúdo consolidado neste arquivo)
 
-3. ✅ **mcp_sankhya/.env** - Arquivo de credenciais
-   - Credenciais OAuth 2.0 configuradas
-   - ⚠️ Não commitar no git!
+### ⚠️ Status Atual: BLOQUEADO
 
-### 🎯 Próximos Passos (CRÍTICO)
+**Problema:** Token OAuth 2.0 retorna "Não autorizado" ao executar queries
 
-#### Passo 1: Confirmar URL Correta (USUÁRIO)
-- [ ] Abrir Postman
-- [ ] Verificar variável `{{base_url}}` na collection OAuth2
-- [ ] Executar request "1.1 Login (OAuth2)" e verificar URL completa
-
-**Opções esperadas:**
-- A: `https://api.sankhya.com.br/authenticate` (sem gateway/v1)
-- B: `https://api.sankhya.com.br/gateway/v1/authenticate` (como está no código)
-- C: Outra URL diferente
-
-#### Passo 2: Corrigir Código MCP
-Após confirmar URL correta:
-```python
-# Arquivo: mcp_sankhya/server.py (linha ~55)
-# TROCAR:
-f"{self.base_url}/authenticate"
-
-# POR:
-f"{self.base_url}/authenticate"  # OU URL correta identificada
+**Erro retornado:**
+```json
+{
+  "serviceName": "DbExplorerSP.executeQuery",
+  "status": "0",
+  "statusMessage": "Não autorizado"
+}
 ```
 
-#### Passo 3: Testar Novamente
+**Possíveis causas:**
+1. ⚠️ **Servidor Sankhya com problemas** (usuário reportou: "acho que o servidor esta off")
+2. 🔍 Credenciais OAuth 2.0 podem não ter permissão para DbExplorer (já verificado: FORAM configuradas)
+3. 🔍 Queries podem precisar de MobileLogin (JSESSIONID) ao invés de Bearer token
+
+### 🎯 Próximos Passos (QUANDO SERVIDOR VOLTAR)
+
+#### Opção 1: Testar se Servidor Voltou
 ```bash
-cd "c:\Users\Ítalo Gomes\Documents\mmarra-data-hub"
 python test_mcp.py
 ```
 
-Resultado esperado:
+**Se funcionar**: ✅ MCP pronto para uso!
+
+#### Opção 2: Testar MobileLogin (Alternativa)
+```bash
+python test_mobile_login.py
+# Vai pedir usuário e senha do Sankhya
 ```
-✅ Query de Divergências V3 executada com sucesso!
-Total de registros: XX
-Produtos únicos: XX
-```
+
+**Se funcionar**: 🔧 Modificar MCP para usar JSESSIONID ao invés de Bearer token
+
+#### 5. Análise de Estrutura Realizada
+
+✅ **Avaliação Completa do Projeto** ([ANALISE_ESTRUTURA.md](ANALISE_ESTRUTURA.md)):
+- **Pontuação Geral**: 6/10 - Pronto para começar implementação, NÃO pronto para produção
+- **Pontos Fortes**: Documentação exemplar (95%), queries prontas (90%), relatórios funcionais (85%)
+- **Gaps Críticos Identificados**:
+  - ❌ Scripts de extração: 0% (BLOQUEADOR para Data Lake)
+  - ❌ Azure Data Lake: 0% configurado (BLOQUEADOR para central de dados)
+  - ❌ Agentes de IA: 0% implementados (BLOQUEADOR para inteligência)
+- **Tempo Estimado**: 2-3 semanas para MVP funcional, 4-6 semanas para produção
+
+✅ **Consolidação de Documentação**:
+- Arquivo `PROXIMOS_PASSOS.md` removido (conteúdo movido para este arquivo)
+- Toda documentação agora centralizada em 3 locais: PROGRESSO_SESSAO.md, CHANGELOG.md, ANALISE_ESTRUTURA.md
 
 ### 📊 Status dos Tokens
-📊 **Tokens**: 65.985/200.000 (33%) - 134.015 tokens restantes
+📊 **Tokens**: 50.556/200.000 (25%) - 149.444 tokens restantes
 
-### 💡 Observações Importantes
+### 💡 Descobertas Importantes
 
-1. **Servidor MCP está bem construído** - Código limpo, estruturado, com tratamento de erros
-2. **Documentação completa** - GUIA_RAPIDO_MCP.md tem instruções detalhadas
-3. **Problema isolado** - Apenas a URL de autenticação precisa ser corrigida
-4. **Query V3 pronta** - Assim que autenticação funcionar, MCP vai executar perfeitamente
+1. **APIs da Sankhya têm endpoints separados**:
+   - Autenticação: Endpoint base (sem /gateway/v1)
+   - Queries/Serviços: Gateway (/gateway/v1)
+
+2. **Dois métodos de autenticação disponíveis**:
+   - **OAuth 2.0**: Para integração de sistemas (client_id/client_secret)
+   - **MobileLogin**: Para usuários individuais (usuário/senha)
+
+3. **Limitações conhecidas**:
+   - DbExplorer: máximo 5.000 registros por query
+   - Permissões: usuário precisa ter acesso ao módulo DbExplorer
 
 ### 📁 Estrutura Atual do MCP
 
 ```
 mcp_sankhya/
-├── server.py              ✅ Servidor MCP completo (5 tools)
-├── requirements.txt       ✅ Dependências (mcp, httpx)
+├── server.py              ✅ URLs corrigidas (linhas 31-32)
+├── requirements.txt       ✅ Dependências instaladas
 ├── .env                   ✅ Credenciais configuradas
-├── .env.example           ✅ Template de credenciais
-├── README.md              ✅ Documentação técnica
+├── .env.example           ✅ Template disponível
+├── README.md              ✅ Documentação completa
 └── __init__.py            ✅ Módulo Python
 
-Raiz do projeto:
-├── GUIA_RAPIDO_MCP.md     ✅ Guia de uso para usuário
-├── test_mcp.py            ✅ Script de teste
-├── test_autenticacao.py   ✅ Script de diagnóstico
+Scripts de teste:
+├── test_mcp.py            ✅ Teste OAuth 2.0
+├── test_autenticacao.py   ✅ Diagnóstico completo
+└── test_mobile_login.py   ✅ Teste MobileLogin (alternativa)
 ```
 
-### 🔧 Tools Disponíveis no MCP (Quando Funcionar)
+### 🔧 Tools Disponíveis no MCP (5 ferramentas)
 
 1. **executar_query_sql** - Executa qualquer query SQL customizada
-2. **executar_query_divergencias** - Executa query V3 de divergências (corrigida)
-3. **executar_query_analise_produto** - Análise detalhada de um produto
+2. **executar_query_divergencias** - Query V3 de divergências (corrigida)
+3. **executar_query_analise_produto** - Análise detalhada de produto
 4. **gerar_relatorio_divergencias** - Gera relatório HTML interativo
-5. **listar_queries_disponiveis** - Lista queries SQL do projeto
+5. **listar_queries_disponiveis** - Lista queries do projeto
 
 ---
 

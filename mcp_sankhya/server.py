@@ -28,7 +28,8 @@ class SankhyaAPI:
     """Cliente para API Sankhya com gerenciamento automático de token."""
 
     def __init__(self):
-        self.base_url = "https://api.sankhya.com.br/gateway/v1"
+        self.auth_url = "https://api.sankhya.com.br"  # Autenticação
+        self.gateway_url = "https://api.sankhya.com.br/gateway/v1"  # Queries
         self.client_id = os.getenv("SANKHYA_CLIENT_ID")
         self.client_secret = os.getenv("SANKHYA_CLIENT_SECRET")
         self.x_token = os.getenv("SANKHYA_X_TOKEN")
@@ -52,7 +53,7 @@ class SankhyaAPI:
         # Renovar token
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{self.base_url}/authenticate",
+                f"{self.auth_url}/authenticate",
                 headers={
                     "Content-Type": "application/x-www-form-urlencoded",
                     "X-Token": self.x_token
@@ -87,7 +88,7 @@ class SankhyaAPI:
 
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{self.base_url}/mge/service.sbr",
+                f"{self.gateway_url}/mge/service.sbr",
                 params={
                     "serviceName": "DbExplorerSP.executeQuery",
                     "outputType": "json"

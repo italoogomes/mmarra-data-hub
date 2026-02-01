@@ -116,6 +116,9 @@ async def test_query_divergencias():
         else:
             print("\nResposta da API nao contem dados esperados")
             print(f"Estrutura recebida: {list(resultado.keys())}")
+            print(f"\nResposta completa:")
+            import json
+            print(json.dumps(resultado, indent=2, ensure_ascii=False))
 
     except Exception as e:
         print(f"\nERRO ao executar query: {str(e)}")

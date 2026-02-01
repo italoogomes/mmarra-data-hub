@@ -10,9 +10,74 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 ## [Não Lançado]
 
 ### 🔄 Em Desenvolvimento
-- Script Python de extração de compras
-- Integração com Azure Data Lake
+- Script Python de extração de compras (CRÍTICO - Bloqueador para Data Lake)
+- Integração com Azure Data Lake (CRÍTICO - Bloqueador para Central de Dados)
+- Agentes de IA (CRÍTICO - Bloqueador para Inteligência)
 - Investigação de casos críticos (produtos 261302 e 263340)
+
+---
+
+## [0.4.2] - 2026-02-01 ✅ URLs MCP CORRIGIDAS + ANÁLISE DE ESTRUTURA
+
+### ✅ Corrigido
+
+#### URLs do Servidor MCP
+- **Problema**: URLs incorretas causavam erro 401 na autenticação
+- **Solução aplicada**:
+  - Autenticação: `https://api.sankhya.com.br/authenticate` (sem /gateway/v1) ✅
+  - Queries: `https://api.sankhya.com.br/gateway/v1/mge/service.sbr` ✅
+- **Arquivo atualizado**: `mcp_sankhya/server.py` (linhas 31-32)
+- **Resultado**: Autenticação OAuth 2.0 funcionando, token obtido com sucesso
+
+### ⚠️ Status Atual
+
+#### MCP Parcialmente Funcional
+- ✅ Autenticação OAuth 2.0: **FUNCIONANDO**
+- ❌ Execução de queries: Retorna "Não autorizado"
+- **Causa provável**: Servidor Sankhya com problemas ou permissões de credenciais
+
+### ✅ Adicionado
+
+#### Análise Completa de Estrutura
+- `ANALISE_ESTRUTURA.md` - Relatório completo (6/10)
+  - Avaliação detalhada de todos os componentes
+  - Identificação de gaps críticos
+  - Plano de ação em 3 fases
+  - Roadmap para MVP (2-3 semanas)
+
+#### Script de Teste Alternativo
+- `test_mobile_login.py` - Teste com usuário/senha (JSESSIONID)
+  - Alternativa ao OAuth 2.0 se continuar bloqueado
+  - Permite validar se MobileLogin funciona
+
+#### Documentação Consolidada
+- Removido `PROXIMOS_PASSOS.md` (conteúdo movido para PROGRESSO_SESSAO.md)
+- Documentação oficial da Sankhya consultada e referenciada
+- Descobertas sobre limitações (DbExplorer: máx 5.000 registros)
+
+### 📊 Descobertas Importantes
+
+1. **Endpoints Separados na API Sankhya**:
+   - Autenticação: Endpoint base (sem /gateway/v1)
+   - Serviços/Queries: Gateway (/gateway/v1)
+
+2. **Dois Métodos de Autenticação**:
+   - OAuth 2.0: Integração de sistemas (client_id/client_secret)
+   - MobileLogin: Usuários individuais (usuário/senha)
+
+3. **Gaps Críticos Identificados**:
+   - ❌ Scripts de extração não existem
+   - ❌ Azure Data Lake não configurado
+   - ❌ Nenhum dado armazenado
+   - ❌ Agentes de IA não implementados
+
+### 🎯 Próximos Passos
+
+1. **Resolver autenticação MCP** (quando servidor Sankhya voltar)
+2. **Implementar `src/extractors/`** (CRÍTICO - Bloqueador)
+3. **Configurar Data Lake** (local ou Azure)
+4. **Primeira carga de dados** (1 mês de compras)
+5. **Implementar agentes de IA** (após ter dados)
 
 ---
 
