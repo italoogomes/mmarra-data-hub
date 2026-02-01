@@ -1,0 +1,108 @@
+=====================================================
+📊 CURL - Análise Detalhada de Produto (Com CTEs)
+=====================================================
+Versão: 1.0
+Data: 2026-01-30
+
+DESCRIÇÃO:
+    Query complexa que calcula o disponível real final de um produto
+    considerando estoque comercial, reservas, bloqueios WMS, pedidos
+    pendentes, etc.
+
+PARÂMETROS:
+    - CODEMP: 7 (empresa)
+    - CODPROD: 261302 (produto a analisar)
+
+    Para mudar o produto, altere o valor "261302" na query.
+
+=====================================================
+
+curl --location 'https://api.sankhya.com.br/gateway/v1/mge/service.sbr?serviceName=DbExplorerSP.executeQuery&outputType=json' \
+--header 'Authorization: Bearer {SEU_TOKEN}' \
+--header 'Content-Type: application/json' \
+--data '{
+  "serviceName": "DbExplorerSP.executeQuery",
+  "requestBody": {
+    "sql": "WITH Parametros AS (SELECT 7 AS CODEMP, 261302 AS CODPROD FROM DUAL), Empresa AS (SELECT EMP.CODEMP, NVL(EMP.WMSLOCALAJEST, (SELECT INTEIRO FROM TSIPAR WHERE CHAVE = '\''WMSLOCALAJEST'\'')) AS CODLOCAL_AJUSTE FROM TGFEMP EMP JOIN Parametros ON Parametros.CODEMP = EMP.CODEMP), SaldoWmsTela AS (SELECT SUM(NVL(ESTW.ESTOQUEVOLPAD - ESTW.SAIDPENDVOLPAD, 0)) AS SALDO_WMS_TELA FROM TGWEST ESTW JOIN TGWEND WEND ON WEND.CODEND = ESTW.CODEND JOIN TGFEMP EMP ON EMP.CODEMP = WEND.CODEMP JOIN Parametros ON Parametros.CODEMP = EMP.CODEMP AND Parametros.CODPROD = ESTW.CODPROD JOIN Empresa ON Empresa.CODEMP = EMP.CODEMP WHERE EMP.UTILIZAWMS = '\''S'\'' AND WEND.BLOQUEADO = '\''N'\'' AND WEND.EXCLCONF = '\''N'\'' AND NOT EXISTS (SELECT 1 FROM TGWDCA DCA WHERE DCA.TIPDOCA = '\''S'\'' AND DCA.CODEND = WEND.CODEND) AND ESTW.CONTROLE <> '\''#EXPLOTESEP'\'' AND NVL(EMP.WMSLOCALAJEST, (SELECT INTEIRO FROM TSIPAR WHERE CHAVE = '\''WMSLOCALAJEST'\'')) = Empresa.CODLOCAL_AJUSTE), CabecalhosPV AS (SELECT CAB.NUNOTA FROM TGFCAB CAB JOIN Parametros ON Parametros.CODEMP = CAB.CODEMP WHERE CAB.CODTIPOPER IN (1007, 1017, 1018, 1019, 1020, 1023, 1024, 1025) AND CAB.PENDENTE = '\''S'\'' AND CAB.STATUSNOTA = '\''L'\''), PedidosPendentes AS (SELECT NVL(SUM(NVL(ITE.QTDNEG, 0)), 0) AS QTD_PEDIDO_PENDENTE FROM TGFITE ITE JOIN CabecalhosPV CAB ON CAB.NUNOTA = ITE.NUNOTA JOIN Parametros ON Parametros.CODPROD = ITE.CODPROD), EstoqueComercial AS (SELECT SUM(NVL(EST.ESTOQUE, 0)) AS ESTOQUE, SUM(NVL(EST.RESERVADO, 0)) AS RESERVADO, SUM(NVL(EST.WMSBLOQUEADO, 0)) AS WMSBLOQUEADO FROM TGFEST EST JOIN Parametros ON Parametros.CODEMP = EST.CODEMP AND Parametros.CODPROD = EST.CODPROD JOIN Empresa ON Empresa.CODEMP = EST.CODEMP WHERE EST.CODLOCAL = Empresa.CODLOCAL_AJUSTE), Calc AS (SELECT ESTOQUE, RESERVADO, WMSBLOQUEADO, (ESTOQUE - RESERVADO - WMSBLOQUEADO) AS DISPONIVEL_COMERCIAL, NVL(SaldoWmsTela.SALDO_WMS_TELA, 0) AS SALDO_WMS_TELA, NVL(PedidosPendentes.QTD_PEDIDO_PENDENTE, 0) AS QTD_PEDIDO_PENDENTE, GREATEST(NVL(SaldoWmsTela.SALDO_WMS_TELA, 0) - NVL(PedidosPendentes.QTD_PEDIDO_PENDENTE, 0), 0) AS WMS_APOS_PEDIDOS FROM EstoqueComercial CROSS JOIN SaldoWmsTela CROSS JOIN PedidosPendentes) SELECT ESTOQUE, RESERVADO, WMSBLOQUEADO, DISPONIVEL_COMERCIAL, SALDO_WMS_TELA, QTD_PEDIDO_PENDENTE, WMS_APOS_PEDIDOS, CASE WHEN DISPONIVEL_COMERCIAL <= 0 THEN 0 ELSE LEAST(DISPONIVEL_COMERCIAL, WMS_APOS_PEDIDOS) END AS DISPONIVEL_REAL_FINAL FROM Calc"
+  }
+}'
+
+=====================================================
+📊 O QUE A QUERY FAZ:
+=====================================================
+
+✅ Analisa UM produto específico em detalhes
+✅ Calcula múltiplas camadas de disponibilidade:
+
+1. ESTOQUE          = Estoque bruto (TGFEST)
+2. RESERVADO        = Quantidade reservada
+3. WMSBLOQUEADO     = Bloqueios no WMS
+4. DISPONIVEL_COMERCIAL = ESTOQUE - RESERVADO - WMSBLOQUEADO
+5. SALDO_WMS_TELA   = Saldo físico no WMS (endereços não bloqueados)
+6. QTD_PEDIDO_PENDENTE = Pedidos de venda pendentes (tops 1007-1025)
+7. WMS_APOS_PEDIDOS = SALDO_WMS_TELA - QTD_PEDIDO_PENDENTE
+8. DISPONIVEL_REAL_FINAL = Menor entre DISPONIVEL_COMERCIAL e WMS_APOS_PEDIDOS
+
+=====================================================
+🔧 COMO MUDAR O PRODUTO:
+=====================================================
+
+Para analisar outro produto, altere os valores na CTE Parametros:
+
+Linha atual:
+    "261302 AS CODPROD"
+
+Para produto 263340:
+    "263340 AS CODPROD"
+
+Para produto 137216:
+    "137216 AS CODPROD"
+
+Basta substituir o número na query SQL acima.
+
+=====================================================
+📋 CAMPOS RETORNADOS:
+=====================================================
+
+| Campo                  | Descrição                                      |
+|------------------------|------------------------------------------------|
+| ESTOQUE                | Estoque bruto na TGFEST                       |
+| RESERVADO              | Quantidade reservada                           |
+| WMSBLOQUEADO           | Quantidade bloqueada no WMS                    |
+| DISPONIVEL_COMERCIAL   | Disponível para venda (teórico)               |
+| SALDO_WMS_TELA         | Saldo físico real no WMS                      |
+| QTD_PEDIDO_PENDENTE    | Pedidos de venda pendentes                    |
+| WMS_APOS_PEDIDOS       | WMS após descontar pedidos                    |
+| DISPONIVEL_REAL_FINAL  | Disponível real considerando todas camadas   |
+
+=====================================================
+💡 DIFERENÇA PARA A OUTRA QUERY:
+=====================================================
+
+QUERY ANTERIOR (curl_divergencias_corrigida.txt):
+- Busca TODOS os produtos com divergência
+- Lista item por item de nota pendente
+- Identifica problemas em massa
+
+ESTA QUERY (curl_analise_detalhada_produto.txt):
+- Analisa UM produto específico
+- Mostra cálculo completo de disponibilidade
+- Detalha cada camada de bloqueio/reserva
+- Útil para entender PORQUE há divergência
+
+=====================================================
+🎯 QUANDO USAR CADA UMA:
+=====================================================
+
+Use curl_divergencias_corrigida.txt quando:
+- Quer ver TODOS os produtos com problema
+- Precisa gerar relatório completo
+- Quer priorizar correções
+
+Use curl_analise_detalhada_produto.txt quando:
+- Quer entender UM produto específico
+- Precisa saber o disponível real final
+- Quer debugar cálculo de estoque
+- Screenshot que você mostrou usa esta query!
+
+=====================================================

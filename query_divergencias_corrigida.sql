@@ -13,6 +13,7 @@
 -- =====================================================
 
 SELECT
+    CAB.CODEMP,
     ITE.CODPROD,
     PRO.DESCRPROD,
     PRO.REFERENCIA,

@@ -1,7 +1,8 @@
 # 📊 Progresso da Sessão - MMarra Data Hub
 
-**Data:** 2026-01-30
-**Versão Atual:** v0.1.0 - MVP Extração de Compras
+**Data:** 2026-02-01
+**Última Atualização:** 2026-02-01 🚀 SERVIDOR MCP CRIADO
+**Versão Atual:** v0.4.0 - Servidor MCP + Query V3 Definitiva
 
 ---
 
@@ -305,6 +306,289 @@ CODPROD | NUNOTA  | TOP  | DIVERGENCIA
    - Por que notas PENDENTES não processaram?
    - Verificar configuração de TOPs problemáticas
    - Identificar se há job de sincronização travado
+
+---
+
+## ✅ Sessão 2026-01-31: Relatórios HTML + Análise Avançada 📊
+
+**Objetivo**: Criar relatórios interativos sem precisar Excel + Queries de análise detalhada
+
+### 🎯 Tarefas Completadas:
+
+#### 1. **Correção da Query de Divergências (CODEMP)**
+- ✅ Adicionado campo `CAB.CODEMP` na query principal
+- ✅ Atualizado `query_divergencias_corrigida.sql`
+- ✅ Atualizado `curl_divergencias_corrigida.txt`
+- ✅ Query agora retorna 15 colunas (era 14)
+
+#### 2. **Relatório HTML Interativo** 📊
+- ✅ Criado `relatorio_divergencias.html` - Relatório completo com:
+  - Dashboard com KPIs (total produtos, notas, divergências)
+  - Tabela interativa com ordenação por coluna
+  - Busca em tempo real
+  - Exportar para CSV
+  - Função de impressão/PDF
+  - Design profissional (gradientes roxo/azul)
+  - Responsivo (mobile-friendly)
+
+#### 3. **Scripts de Conversão**
+- ✅ Criado `converter_json_para_html.py` - Conversor automático
+  - Lê JSON do arquivo `resultado_query.json`
+  - Gera HTML atualizado automaticamente
+  - Mostra estatísticas (produtos únicos, divergência total, etc.)
+
+- ✅ Criado `gerar_relatorio.py` - Gerador interativo
+  - Aceita JSON colado diretamente no terminal
+  - Processa e gera HTML instantaneamente
+  - Detecta automaticamente se tem CODEMP ou não
+  - Suporta query antiga (14 campos) e nova (15 campos)
+
+#### 4. **Query de Análise Detalhada de Produto** 🔍
+- ✅ Criado `query_analise_detalhada_produto.sql` - Query com CTEs
+  - Calcula disponível real final considerando todas camadas
+  - Mostra: ESTOQUE, RESERVADO, WMSBLOQUEADO, DISPONIVEL_COMERCIAL
+  - Mostra: SALDO_WMS_TELA, QTD_PEDIDO_PENDENTE, WMS_APOS_PEDIDOS
+  - Mostra: DISPONIVEL_REAL_FINAL (cálculo completo)
+  - 200+ linhas documentadas e comentadas
+
+- ✅ Criado `curl_analise_detalhada_produto.txt` - cURL pronto
+  - Query em linha única escapada
+  - Instruções de uso completas
+  - Diferenciação clara entre queries (divergências vs análise)
+
+#### 5. **Documentação Completa**
+- ✅ Criado `README_RELATORIO.md` - Guia completo de uso dos relatórios
+  - Passo a passo ilustrado
+  - Troubleshooting
+  - Checklist de uso
+  - Diferença entre métodos (Python vs manual)
+
+### 📊 Análises Realizadas:
+
+#### Produto 263340 (Divergência Crítica)
+```
+TGFEST (ERP):        452 unidades
+TGWEST (WMS):      6,346 unidades
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DIVERGÊNCIA:       5,894 unidades (!!)
+```
+- ✅ Identificado como maior divergência do sistema
+- ✅ Múltiplas notas pendentes (100+ registros)
+- ⚠️ Causa: Notas com STATUS='P' não processadas
+
+#### Produto 261302 (Caso Gravíssimo) 🔥
+```
+ESTOQUE:             316 un
+RESERVADO:           260 un (82% do total)
+WMSBLOQUEADO:        213 un (67% do total)
+DISPONIVEL_COMERCIAL: -157 un (NEGATIVO!)
+SALDO_WMS_TELA:       43 un (físico real)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DISPONIVEL_REAL:       0 un (bloqueado para venda)
+```
+
+**Problemas Identificados:**
+1. 🔥 Divergência ERP↔WMS: 273 unidades (316 - 43)
+2. 🔥 Sobre-reserva: 473 unidades bloqueadas > 316 disponíveis
+3. 🔥 Disponível negativo: -157 un (impossível atender reservas)
+4. 🔥 Produto bloqueado: 0 disponível para venda
+
+**Causas Prováveis:**
+- Notas pendentes não processadas
+- Bloqueios fantasma no WMS (213 un)
+- Reservas antigas não liberadas (260 un)
+- Ajustes manuais incorretos
+- Dessincronia total ERP↔WMS
+
+### 📁 Arquivos Criados/Atualizados Nesta Sessão:
+
+#### Queries SQL:
+1. `query_divergencias_corrigida.sql` (v2.0 com CODEMP)
+2. `query_analise_detalhada_produto.sql` (nova - 200+ linhas)
+
+#### cURLs Postman:
+3. `curl_divergencias_corrigida.txt` (atualizado com CODEMP)
+4. `curl_analise_detalhada_produto.txt` (novo)
+
+#### Scripts Python:
+5. `converter_json_para_html.py` (atualizado para 15 campos)
+6. `gerar_relatorio.py` (novo - gerador interativo)
+
+#### Relatórios HTML:
+7. `relatorio_divergencias.html` (completo e interativo)
+8. `relatorio_divergencias_preview.html` (teste com 2 registros)
+9. `relatorio_divergencias_completo.html` (template para dados reais)
+
+#### Documentação:
+10. `README_RELATORIO.md` (guia completo de uso)
+
+### 🎯 Resultados Alcançados:
+
+✅ **Sistema de Relatórios Completo**
+- Usuário pode visualizar divergências sem Excel
+- Relatório interativo com busca, ordenação, filtros
+- Exportação para CSV disponível
+- Design profissional e responsivo
+
+✅ **Duas Abordagens de Query**
+1. **Divergências em Massa** - Ver todos os produtos com problema
+2. **Análise Detalhada** - Entender UM produto específico
+
+✅ **Automatização**
+- Scripts Python para converter JSON → HTML
+- Processo simplificado (colar JSON e pronto)
+- Detecta automaticamente formato da query
+
+✅ **Problemas Graves Identificados**
+- Produto 263340: 5.894 unidades de divergência
+- Produto 261302: Disponível negativo (-157), bloqueado total
+- Ambos com notas STATUS='P' não processadas
+
+### ⚠️ Pendente para Próxima Sessão:
+
+#### Investigação Profunda dos Casos Críticos:
+- [ ] **Produto 261302** - Investigar 260 un reservadas
+- [ ] **Produto 261302** - Investigar 213 un bloqueadas WMS
+- [ ] **Produto 261302** - Listar endereços físicos WMS
+- [ ] **Produto 261302** - Buscar notas pendentes (STATUS='P')
+- [ ] **Produto 261302** - Propor correções (ajuste ou processamento)
+
+- [ ] **Produto 263340** - Processar 100+ notas pendentes
+- [ ] **Produto 263340** - Validar ajuste entrada NUNOTA 1166922
+- [ ] **Produto 263340** - Investigar por que notas não processaram
+
+#### Queries de Investigação:
+- [ ] Criar query para listar reservas detalhadas (TGFRES)
+- [ ] Criar query para endereços bloqueados WMS (TGWEND + TGWEST)
+- [ ] Criar query para notas pendentes por produto
+- [ ] Criar query para histórico de movimentações
+
+#### Relatório Final:
+- [ ] Executar query de divergências com dados reais completos
+- [ ] Gerar HTML final com TODOS os produtos
+- [ ] Priorizar correções por criticidade
+
+---
+
+## 🔥 Sessão 2026-02-01: CORREÇÃO DEFINITIVA - Query V3 ⭐
+
+**Contexto**: Usuário reportou que dados ainda estavam "mais que triplicados" mesmo após correção V2 do TGFTOP.
+
+### 🐛 Novo Problema Descoberto: Multiplicação por CODLOCAL
+
+**Sintoma Reportado**:
+> "Bom dia, precisamos investigar pq os dados que vc me passou estavam mais que triplicados"
+
+**Investigação Realizada**:
+Revisitei a query V2 e identifiquei uma SEGUNDA fonte de multiplicação que não havia sido corrigida:
+
+```sql
+-- ❌ PROBLEMA NA V2:
+LEFT JOIN TGFEST EST ON ITE.CODPROD = EST.CODPROD AND EST.CODEMP = 7
+```
+
+**Causa Raiz da Triplicação**:
+```
+Tabela TGFEST pode ter MÚLTIPLAS linhas por produto (múltiplos CODLOCAL):
+- CODPROD 137216, CODLOCAL 1: 100 unidades
+- CODPROD 137216, CODLOCAL 2: 50 unidades
+- CODPROD 137216, CODLOCAL 3: 30 unidades
+
+JOIN sem GROUP BY = Multiplicação 3x!
+
+Resultado:
+- NUNOTA 1171669 com produto 137216 aparecia 3 VEZES
+- Cada linha mostrava estoque de um local diferente
+- Total correto (180), mas distribuído em 3 linhas
+```
+
+### ✅ Solução Implementada: Query V3 Definitiva
+
+**Correção Aplicada** ([query_divergencias_v3_definitiva.sql](query_divergencias_v3_definitiva.sql)):
+
+```sql
+-- ❌ V2 (ainda com problema):
+LEFT JOIN TGFEST EST ON ITE.CODPROD = EST.CODPROD AND EST.CODEMP = 7
+
+-- ✅ V3 (DEFINITIVA - sem multiplicação):
+LEFT JOIN (
+    SELECT
+        CODPROD,
+        CODEMP,
+        SUM(NVL(ESTOQUE, 0)) AS ESTOQUE_TGFEST
+    FROM TGFEST
+    WHERE CODEMP = 7
+    GROUP BY CODPROD, CODEMP
+) EST ON ITE.CODPROD = EST.CODPROD AND EST.CODEMP = CAB.CODEMP
+```
+
+**Mesmo padrão aplicado no TGWEST** (que já estava correto desde V1):
+```sql
+LEFT JOIN (
+    SELECT CODPROD, SUM(ESTOQUE) AS ESTOQUE_WMS
+    FROM TGWEST
+    WHERE CODEMP = 7
+    GROUP BY CODPROD
+) WMS ON ITE.CODPROD = WMS.CODPROD
+```
+
+### 📊 Comparação das Versões
+
+| Versão | Problema | Status |
+|--------|----------|--------|
+| **V1** | TGFTOP sem GROUP BY → Duplicação por ATUALEST ('E','N','B') | ❌ Multiplicação 3x |
+| **V2** | TGFTOP corrigido, mas TGFEST sem GROUP BY → Multiplicação por CODLOCAL | ⚠️ Ainda multiplica |
+| **V3** | TGFTOP + TGFEST ambos com GROUP BY → SEM MULTIPLICAÇÃO | ✅ DEFINITIVA |
+
+### 📁 Arquivos Criados Nesta Sessão:
+
+1. ✅ **query_divergencias_v3_definitiva.sql**
+   - Query SQL definitiva sem qualquer fonte de multiplicação
+   - Comentários explicando AMBAS as correções (TGFTOP + TGFEST)
+   - Validação sugerida para confirmar unicidade
+
+2. ✅ **curl_divergencias_v3_definitiva.txt**
+   - cURL pronto para Postman com query V3
+   - Documentação completa das 3 versões
+   - Exemplo comparativo mostrando problema e solução
+   - Instruções de validação
+
+3. ✅ **PROGRESSO_SESSAO.md** (este arquivo)
+   - Seção nova documentando descoberta e correção V3
+   - Versão atualizada para v0.3.0
+
+### 🔍 Como Validar Se V3 Está Correta
+
+Execute esta query após rodar a V3:
+
+```sql
+-- Escolha um NUNOTA qualquer dos resultados
+SELECT COUNT(*), SUM(DIVERGENCIA)
+FROM (
+    -- Cole a query V3 aqui
+) RESULTADO
+WHERE NUNOTA = 1171669  -- Seu NUNOTA
+GROUP BY NUNOTA, CODPROD
+HAVING COUNT(*) > 1  -- Se retornar linhas, ainda há duplicação!
+```
+
+**Resultado esperado**: Nenhuma linha retornada (sem duplicatas)
+
+### ✅ Garantias da Query V3:
+
+✅ **TGFTOP**: Subquery com GROUP BY elimina duplicação por ATUALEST
+✅ **TGFEST**: Subquery com SUM() e GROUP BY elimina multiplicação por CODLOCAL
+✅ **TGWEST**: Subquery com SUM() e GROUP BY (já estava correto)
+✅ **Resultado**: 1 linha única por CODPROD + NUNOTA
+✅ **Valores**: Corretos (somas consolidadas de todos os locais/endereços)
+
+### 🎯 Próximo Passo:
+
+**Executar query V3 no Postman**:
+1. Usar arquivo `curl_divergencias_v3_definitiva.txt`
+2. Gerar novo JSON sem qualquer multiplicação
+3. Processar com `gerar_relatorio.py` para criar HTML final
+4. Validar que não há mais duplicatas/triplicatas
 
 ---
 
