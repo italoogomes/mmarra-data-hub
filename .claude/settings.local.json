@@ -5,7 +5,9 @@
       "WebFetch(domain:developer.sankhya.com.br)",
       "WebFetch(domain:ajuda.sankhya.com.br)",
       "Bash(python:*)",
-      "Bash(if not exist \"%APPDATA%\\\\Claude\" mkdir \"%APPDATA%\\\\Claude\")"
+      "Bash(if not exist \"%APPDATA%\\\\Claude\" mkdir \"%APPDATA%\\\\Claude\")",
+      "Bash(ls:*)",
+      "Bash(curl:*)"
     ]
   }
 }

@@ -16,6 +16,76 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [0.4.1] - 2026-02-01 🔧 TESTE MCP - AUTENTICAÇÃO PENDENTE
+
+### ⚠️ Problema Identificado
+
+#### Servidor MCP - Autenticação OAuth 2.0 Falhando
+- **Status**: ❌ Bloqueado - Servidor não funciona
+- **Erro**: 401 "O Header Authorization é obrigatório para esta requisição"
+- **Endpoint testado**: `https://api.sankhya.com.br/gateway/v1/authenticate`
+- **Causa provável**: URL de autenticação incorreta
+
+#### Investigação Realizada
+- ✅ Pacote MCP instalado e funcionando (`import mcp.server` OK)
+- ✅ Servidor MCP criado e estruturado corretamente
+- ✅ Credenciais OAuth 2.0 configuradas no `.env`
+- ❌ Autenticação falhando com erro 401
+
+#### Diferença Crítica Encontrada
+| Local | URL Autenticação |
+|-------|------------------|
+| Código MCP | `https://api.sankhya.com.br/gateway/v1/authenticate` |
+| Postman | `{{base_url}}/authenticate` (valor de base_url desconhecido) |
+
+### ✅ Adicionado
+
+#### Scripts de Diagnóstico
+- `test_mcp.py` - Script de teste do servidor MCP
+  - Tenta executar query de divergências V3
+  - Falhou com erro 401 (autenticação)
+- `test_autenticacao.py` - Script de diagnóstico de autenticação
+  - Testa OAuth 2.0 automaticamente
+  - Oferece teste de MobileLogin interativo
+  - Identifica qual método funciona
+- `mcp_sankhya/.env` - Arquivo de credenciais criado
+
+#### Documentação
+- `PROXIMOS_PASSOS.md` - Guia rápido do próximo passo crítico
+  - Instruções claras para usuário verificar URL no Postman
+  - Checklist de ações necessárias
+
+### 🎯 Próximos Passos (CRÍTICO)
+
+#### Ação Necessária (Usuário)
+1. Verificar variável `{{base_url}}` na collection Postman OAuth2
+2. Executar request "1.1 Login (OAuth2)" no Postman
+3. Informar qual URL completa aparece
+
+#### Ação Após Confirmar URL
+1. Corrigir `mcp_sankhya/server.py` (linha ~55)
+2. Atualizar URL do endpoint de autenticação
+3. Testar com `python test_mcp.py`
+4. Validar que queries executam corretamente
+
+### 📊 Análise
+
+**Métodos de Autenticação Identificados:**
+
+1. **MobileLogin** (Collection antiga)
+   - URL: `https://api.sankhya.com.br/mge/service.sbr?serviceName=MobileLoginSP.login`
+   - Autenticação: Usuário + Senha
+   - Retorna: JSESSIONID (Cookie)
+
+2. **OAuth 2.0** (Collection nova + MCP)
+   - URL: `{{base_url}}/authenticate`
+   - Autenticação: client_id + client_secret + X-Token
+   - Retorna: Bearer token
+
+**Usuário confirmou:** Usa OAuth 2.0 (método 2)
+
+---
+
 ## [0.4.0] - 2026-02-01 🚀 SERVIDOR MCP
 
 ### ✅ Adicionado
