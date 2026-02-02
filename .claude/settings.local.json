@@ -9,7 +9,8 @@
       "Bash(ls:*)",
       "Bash(curl:*)",
       "WebFetch(domain:community.sankhya.com.br)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(pip install:*)"
     ]
   }
 }

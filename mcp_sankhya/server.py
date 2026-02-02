@@ -98,7 +98,6 @@ class SankhyaAPI:
                     "Content-Type": "application/json"
                 },
                 json={
-                    "serviceName": "DbExplorerSP.executeQuery",
                     "requestBody": {
                         "sql": sql
                     }

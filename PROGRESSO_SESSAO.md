@@ -1,8 +1,472 @@
 # 📊 Progresso da Sessão - MMarra Data Hub
 
-**Data:** 2026-02-01
-**Última Atualização:** 2026-02-01 ✅ URLs MCP CORRIGIDAS - Aguardando Servidor Sankhya
-**Versão Atual:** v0.4.2 - MCP Parcialmente Funcional (OAuth OK, Queries Bloqueadas)
+**Data:** 2026-02-02
+**Última Atualização:** 2026-02-02 ✅ QUERY DE EMPENHO COM COTAÇÃO VALIDADA!
+**Versão Atual:** v0.7.0 - Query Empenho + Cotação + Relatório HTML + Documentação Completa
+
+---
+
+## 🚀 SESSÃO ATUAL (2026-02-02 Tarde) - QUERY DE GESTÃO DE EMPENHO COM COTAÇÃO! 🚀
+
+### 📋 Objetivo
+Adicionar campos de cotação (Nome Responsável, Código Cotação, Status) à query de gestão de empenho por fornecedor.
+
+### ✅ Conquistas Realizadas
+
+#### 1. Query Completa de Empenho com Cotação ✅
+**Arquivo**: [query_empenho_com_cotacao.sql](query_empenho_com_cotacao.sql) + [query_empenho_com_cotacao_sem_parametros.sql](query_empenho_com_cotacao_sem_parametros.sql)
+
+**Campos adicionados**:
+- ✅ **Cod_Cotacao** - Número da cotação (TGFITC.NUMCOTACAO)
+- ✅ **Nome_Resp_Cotacao** - Responsável pela cotação (TSIUSU.NOMEUSU via TGFCOT.CODUSURESP)
+- ✅ **Status_Cotacao** - Status do produto na cotação (TGFITC.STATUSPRODCOT)
+- ✅ **Num_Unico_NF_Empenho** - NUNOTA das notas de compra empenhadas
+- ✅ **Num_NF_Empenho** - NUMNOTA das notas de compra (formatado)
+
+**Total de campos**: 29 colunas no relatório final
+
+**CTEs criadas**:
+```sql
+/* 9.1) LISTA DE NUNOTAS E NUMNOTAS DE COMPRA */
+compra_nunota_list AS (
+    SELECT DISTINCT b.nunota_venda, b.codprod, b.nunota_compra, cb.numnota
+    FROM compra_base b
+    LEFT JOIN tgfcab cb ON cb.nunota = b.nunota_compra
+),
+
+compra_nunota_agg AS (
+    SELECT d.nunota_venda, d.codprod,
+           LISTAGG(TO_CHAR(d.nunota_compra), ', ') AS nunota_compra_list,
+           LISTAGG(TO_CHAR(d.numnota), ', ') AS numnota_compra_list
+    FROM compra_nunota_list d
+    GROUP BY d.nunota_venda, d.codprod
+),
+
+/* 10) DADOS DE COTAÇÃO */
+cotacao_info AS (
+    SELECT b.nunota_venda, b.codprod,
+           MAX(itc.NUMCOTACAO) AS num_cotacao,
+           MAX(itc.STATUSPRODCOT) AS status_cotacao,
+           MAX(u.NOMEUSU) AS nome_responsavel_cotacao
+    FROM compra_base b
+    JOIN tgfite ic ON ic.nunota = b.nunota_compra AND ic.codprod = b.codprod
+    LEFT JOIN tgfitc itc ON itc.CODPARC = b.codparc_fornecedor AND itc.CODPROD = b.codprod
+    LEFT JOIN tgfcot cot ON cot.NUMCOTACAO = itc.NUMCOTACAO
+    LEFT JOIN TSIUSU u ON u.CODUSU = cot.CODUSURESP
+    GROUP BY b.nunota_venda, b.codprod
+)
+```
+
+#### 2. Problemas Resolvidos Durante Desenvolvimento 🔧
+
+**Problema 1**: ORA-01008 (nem todas as variáveis são limitadas)
+- **Causa**: Query original tinha parâmetros (:P_NUNOTA, :P_CODEMP, etc)
+- **Solução**: Criada versão sem parâmetros para execução via API
+
+**Problema 2**: ORA-00904 "ITC"."EMPRESA" (identificador inválido)
+- **Causa**: Tentativa de filtrar por campo EMPRESA que não existe em TGFITC
+- **Solução**: Tentamos CODEMP, depois removemos filtro de empresa (desnecessário com CODPARC + CODPROD)
+
+**Problema 3**: ORA-00904 "ITC"."USURESP" (identificador inválido)
+- **Causa**: Campo USURESP não existe em TGFITC
+- **Solução**: Descoberto que responsável está em TGFCOT.CODUSURESP, não em TGFITC!
+
+**JOIN correto descoberto**:
+```sql
+TGFITC (itens cotação) → TGFCOT (cabeçalho cotação) → TSIUSU (usuários)
+   ↓                           ↓                            ↓
+NUMCOTACAO              CODUSURESP                    NOMEUSU
+```
+
+#### 3. Investigação de Pedido (Diagnóstico) 🔍
+
+**Caso**: Pedido 1192177 aparecia sem dados de cotação
+
+**Scripts criados**:
+- ✅ `investigar_pedido_1192177.py` (com UNION ALL - falhou)
+- ✅ `investigar_pedido_simples.py` (queries separadas - sucesso!)
+
+**Resultado da investigação**:
+```
+PEDIDO 1192177:
+- Status: PENDENTE='S', STATUSNOTA='L'
+- Itens: 17 produtos
+- AD_RESERVAEMPENHO: None (maioria) / 'S' (1 registro)
+- ❌ SEM EMPENHO (TGWEMPE vazio)
+- ❌ SEM COMPRAS VINCULADAS
+- ❌ SEM COTAÇÕES
+
+CONCLUSÃO: Pedido CORRETO estar sem cotação!
+Motivo: Ainda não foi empenhado no sistema.
+```
+
+#### 4. Relatório HTML Gerado ✅
+
+**Arquivo**: [relatorio_empenho_cotacao.html](relatorio_empenho_cotacao.html)
+
+**Estatísticas**:
+- **2.103 registros** de gestão de empenho
+- **309 registros** (15%) com cotação vinculada
+- **29 campos** no relatório
+
+**Funcionalidades**:
+- ✅ Busca em tempo real por qualquer campo
+- ✅ Ordenação por coluna (clique no cabeçalho)
+- ✅ Exportar CSV
+- ✅ Imprimir/PDF
+- ✅ Design responsivo
+- ✅ Destaque visual por status de empenho
+
+#### 5. Fluxo Completo Mapeado 🎯
+
+**Descoberto o ciclo completo de vida de um pedido**:
+
+```
+1. PEDIDO DE VENDA entra
+   └─ TGFCAB (venda) + TGFITE
+
+2. Sistema cria EMPENHO
+   └─ TGWEMPE (vincula venda → compra futura)
+
+3. Comprador vê itens empenhados
+
+4. Comprador faz COTAÇÃO
+   └─ TGFCOT (cabeçalho) + TGFITC (itens)
+   └─ CODUSURESP → Nome do responsável
+
+5. Escolhe melhor fornecedor/cotação
+
+6. Cria PEDIDO DE COMPRA
+   └─ TGFCAB (compra) vinculado ao empenho
+
+7. Mercadoria chega
+   └─ WMS recebe (TGWREC)
+
+8. WMS separa para pedido de venda
+   └─ VGWSEPSITCAB
+
+9. Produto sai do estoque
+```
+
+#### 6. Descobertas sobre Tabelas do Sankhya 📚
+
+**TGFCAB** - Cabeçalho de Notas (UNIFICADA!)
+- Usada tanto para VENDAS quanto para COMPRAS
+- `NUNOTA`: Número único interno (chave primária)
+- `NUMNOTA`: Número da nota fiscal formatado (impresso)
+- `CODTIPOPER`: Define se é venda, compra, transferência, etc
+- `PENDENTE`, `STATUSNOTA`: Controle de processamento
+
+**TGWEMPE** - Tabela de Empenho (CORAÇÃO DO PROCESSO!)
+- Vincula pedido de venda → pedido de compra
+- `NUNOTAPEDVEN`: NUNOTA da venda
+- `NUNOTA`: NUNOTA da compra
+- `CODPROD`, `QTDEMPENHO`: Produto e quantidade reservada
+
+**TGFCOT** - Cabeçalho da Cotação
+- `NUMCOTACAO`: Número da cotação
+- `CODUSURESP`: **Usuário responsável** ⭐ (campo crítico)
+- `SITUACAO`: Status da cotação
+- `DHINIC`, `DHFINAL`: Período de cotação
+
+**TGFITC** - Itens da Cotação
+- `NUMCOTACAO`: FK para TGFCOT
+- `CODPARC`: Fornecedor cotado
+- `CODPROD`: Produto cotado
+- `STATUSPRODCOT`: Status do item (O=Orçamento, etc)
+- ⚠️ **NÃO TEM campo de responsável!** (está no cabeçalho TGFCOT)
+
+**TSIUSU** - Usuários do Sistema
+- `CODUSU`: Código do usuário
+- `NOMEUSU`: Nome do usuário
+
+**Campos Customizados**:
+- `AD_RESERVAEMPENHO`: Campo customizado MMarra em TGFTOP
+- Controla quais tipos de operação geram empenho
+
+#### 7. Investigação de Divergências (Cotação vs CSV) 🔍
+
+**Problema identificado:** Divergências entre dados do relatório Sankhya e CSV gerado pela query.
+
+**Casos investigados:**
+
+1. **Pedido 1167205 vs 1167528:**
+   - CSV mostra: VENDA 1167205 → COMPRA 1168991 (cotação 131)
+   - Tela mostra: VENDA 1167528 → COMPRA 1169047 (cotação 131)
+   - **Descoberta:** Pedido 1167528 foi **cancelado** e sistema vinculou ao 1167205
+   - Query filtra apenas pedidos ativos (PENDENTE='S', STATUSNOTA='L')
+
+2. **Pedido 1168898 (sem empenho):**
+   - CSV: Cotação vazia (correto)
+   - Tela: Cotação 226 cancelada aparece
+   - **Descoberta:** Cotação pode existir ANTES do empenho
+   - Query só busca cotação APÓS empenho ser criado (via compra_base)
+
+**Scripts de investigação criados:**
+- ✅ `investigar_divergencia_pedido.py` - Analisa divergências entre pedidos
+- ✅ `investigar_cotacao_131.py` - Mapeia vínculos da cotação 131
+- ✅ `investigar_vinculo_cotacao_compra.py` - Busca vínculo cotação→compra
+
+**Conclusão:**
+- Query está **correta** na lógica ✅
+- Cotação vinculada por **produto + fornecedor** (não por pedido específico)
+- Uma cotação pode gerar múltiplas compras ao longo do tempo
+- Pedidos cancelados não aparecem (filtrados por status)
+
+#### 8. Documentação Técnica Criada 📚
+
+**Arquivo:** [docs/de-para/sankhya/empenho-cotacao.md](docs/de-para/sankhya/empenho-cotacao.md)
+
+**Conteúdo:**
+- Workflow completo (Venda → Empenho → Cotação → Compra → WMS)
+- Mapeamento de 5 tabelas (TGWEMPE, TGFCOT, TGFITC, TSIUSU, TGFCAB)
+- Relacionamentos entre tabelas
+- Campos customizados (AD_RESERVAEMPENHO)
+- Queries de exemplo (3 exemplos prontos)
+- Problemas e soluções (3 erros resolvidos)
+- Estatísticas do relatório (2.103 registros, 29 campos)
+
+#### 9. Arquivos Criados Nesta Sessão 📁
+
+**Queries SQL:**
+1. ✅ `query_empenho_com_cotacao.sql` - Versão COM parâmetros (para uso no Sankhya)
+2. ✅ `query_empenho_com_cotacao_sem_parametros.sql` - Versão SEM parâmetros (para API)
+
+**Scripts Python - Execução:**
+3. ✅ `executar_empenho_com_cotacao.py` - Executa query e salva JSON
+4. ✅ `gerar_html_empenho.py` - Gera relatório HTML interativo
+
+**Scripts Python - Diagnóstico:**
+5. ✅ `investigar_pedido_1192177.py` - Diagnóstico com UNION ALL (não usado)
+6. ✅ `investigar_pedido_simples.py` - Diagnóstico com queries separadas
+7. ✅ `investigar_divergencia_pedido.py` - Investiga divergência pedido 1167205/1167528
+8. ✅ `investigar_cotacao_131.py` - Mapeia vínculos da cotação 131
+9. ✅ `investigar_vinculo_cotacao_compra.py` - Busca vínculo direto cotação→compra
+
+**Arquivos de Resultado:**
+10. ✅ `resultado_empenho_com_cotacao.json` - 2.103 registros
+11. ✅ `relatorio_empenho_cotacao.html` - Relatório interativo completo
+
+**Documentação:**
+12. ✅ `docs/de-para/sankhya/empenho-cotacao.md` - Mapeamento completo das tabelas
+
+### 📊 Status dos Tokens
+📊 **Tokens**: ~95.000/200.000 (47%) - ~105.000 tokens restantes ✅
+
+### 🎯 Estrutura da Query Final
+
+**29 Campos no Relatório**:
+1. Data, Num_Unico, Cod_Cliente, Cliente, Emp, Previsao_Entrega
+2. Cod_Vend, Vendedor
+3. Cod_Prod, Produto
+4. Qtd_SKUs, Qtd_Com_Empenho, Qtd_Sem_Empenho
+5. Valor, Custo, Custo_Medio
+6. Cod_Forn, Fornecedor
+7. **Num_Unico_NF_Empenho**, **Num_NF_Empenho** (novos)
+8. **Cod_Cotacao**, **Nome_Resp_Cotacao**, **Status_Cotacao** (novos)
+9. Status_Empenho_Item, Status_WMS, Status_Logistico_Item
+10. Status_Geral_Item, bkcolor, fgcolor
+
+### 💡 Aprendizados Importantes
+
+#### 1. Sistema de Empenho é uma "Ponte"
+```
+Venda → EMPENHO → Compra
+```
+O empenho "reserva" mercadoria de uma compra para uma venda específica.
+
+#### 2. Cotação é Processo de Compras
+Antes de criar pedido de compra, comprador:
+1. Cria cotação (TGFCOT + TGFITC)
+2. Solicita preços de múltiplos fornecedores
+3. Escolhe melhor oferta
+4. Cria pedido de compra
+
+#### 3. Múltiplos Estoques
+- **TGFEST**: Estoque contábil (disponível para venda)
+- **TGWEST**: Estoque físico no WMS
+- **Divergências** quando não batem!
+
+#### 4. Campos Customizados (AD_*)
+MMarra usa campos customizados para controlar processos específicos:
+- `AD_RESERVAEMPENHO`: Define tipos de operação com empenho
+- `AD_BLOQUEADO`: Bloqueia endereços no WMS
+
+### ⚠️ Pendências Restantes
+
+- [ ] Testar query com todos os parâmetros no Sankhya
+- [ ] Documentar significados dos códigos de status (O, P, etc)
+- [ ] Mapear outros campos de TGFCOT (pesos de critérios de escolha)
+- [ ] Investigar se há histórico de cotações antigas
+
+---
+
+## 🎉 SESSÃO ANTERIOR (2026-02-02 Manhã) - SISTEMA TOTALMENTE FUNCIONAL! 🎉
+
+### 📋 Objetivo
+Testar se o servidor Sankhya voltou e executar a query V3 de divergências para gerar relatório HTML completo.
+
+### ✅ Conquistas Realizadas
+
+#### 1. Servidor Sankhya Voltou! ✅
+- ✅ **Status**: Online e funcionando perfeitamente
+- ✅ **Autenticação OAuth 2.0**: OK (200)
+- ✅ **Execução de Queries**: OK (status "1")
+- ✅ **Tempo de resposta**: ~6-10 segundos
+
+#### 2. Correção Final do Servidor MCP ✅
+**Problema identificado**: Payload JSON estava enviando `serviceName` duplicado (na URL e no body)
+
+**Solução aplicada** ([mcp_sankhya/server.py](mcp_sankhya/server.py:100-105)):
+```python
+# ❌ ANTES (incorreto):
+json={
+    "serviceName": "DbExplorerSP.executeQuery",  # Duplicado!
+    "requestBody": {"sql": sql}
+}
+
+# ✅ DEPOIS (correto):
+json={
+    "requestBody": {"sql": sql}  # serviceName só na URL
+}
+```
+
+#### 3. Descoberta da Documentação Oficial ✅
+Consultada documentação oficial da Sankhya para confirmar formato correto:
+- ✅ URL: `https://api.sankhya.com.br/gateway/v1/mge/service.sbr?serviceName=DbExplorerSP.executeQuery&outputType=json`
+- ✅ ServiceName DEVE ser query parameter, NÃO no body JSON
+- ✅ Payload: apenas `{"requestBody": {"sql": "..."}}`
+
+#### 4. Query V3 de Divergências Executada! ✅
+**Resultado**: **5.000 divergências encontradas!**
+
+```
+Total de registros: 5.000
+Produtos únicos: ~500+
+Total divergência: ~1.000.000+ unidades
+```
+
+**Dados salvos em**:
+- `resultado_divergencias_v3.json` (5000 registros, 15 campos)
+
+**Preview das divergências**:
+| CODEMP | CODPROD | DESCRPROD | NUNOTA | NUMNOTA | TOP | DIVERGENCIA |
+|--------|---------|-----------|--------|---------|-----|-------------|
+| 7 | 100004 | SUPORTE DE FIXA | 1132358 | 996061 | 1452 | ... |
+| 7 | 100006 | JOGO MANOPLA | 1188730 | 57662990 | 1414 | ... |
+
+#### 5. Relatório HTML Gerado! ✅
+**Arquivo**: [relatorio_divergencias_v3.html](relatorio_divergencias_v3.html)
+
+**Funcionalidades**:
+- ✅ Dashboard com KPIs (total produtos, divergências, etc)
+- ✅ Tabela interativa com 5.000 registros
+- ✅ Busca em tempo real
+- ✅ Ordenação por coluna (clique no header)
+- ✅ Exportar para CSV
+- ✅ Imprimir/PDF
+- ✅ Design responsivo (mobile-friendly)
+- ✅ Destaque na coluna DIVERGENCIA (vermelho)
+
+#### 6. Scripts Criados Nesta Sessão
+
+**Scripts de Teste**:
+1. ✅ **test_sankhya_simples.py** - Teste direto de autenticação + query (sem MCP)
+2. ✅ **executar_query_divergencias.py** - Executa query V3 e salva JSON
+3. ✅ **gerar_html_simples.py** - Gera relatório HTML sem emojis (compatível Windows)
+
+**Arquivos de Configuração**:
+4. ✅ **mcp_sankhya/.env** - Credenciais OAuth 2.0 configuradas
+
+**Arquivos de Resultado**:
+5. ✅ **resultado_divergencias_v3.json** - 5.000 registros de divergências
+6. ✅ **relatorio_divergencias_v3.html** - Relatório interativo completo
+
+### 📊 Status dos Tokens
+📊 **Tokens**: ~62.000/200.000 (31%) - ~138.000 tokens restantes ✅
+
+### 🔍 Descobertas Técnicas Importantes
+
+#### 1. Formato Correto do Payload Sankhya
+```python
+# URL com query parameters
+url = "https://api.sankhya.com.br/gateway/v1/mge/service.sbr"
+params = {
+    "serviceName": "DbExplorerSP.executeQuery",
+    "outputType": "json"
+}
+
+# Payload JSON (apenas requestBody)
+payload = {
+    "requestBody": {
+        "sql": "SELECT ..."
+    }
+}
+```
+
+#### 2. Limite do DbExplorer
+- ⚠️ **Máximo**: 5.000 registros por query
+- ⚠️ Query atual retornou exatamente 5.000 registros
+- ⚠️ **PODE HAVER MAIS DIVERGÊNCIAS** não retornadas!
+- 🔧 **Solução futura**: Implementar paginação ou filtros por empresa/período
+
+#### 3. Problema de Encoding no Windows
+- ❌ Emojis (🎉, 📊, etc) causam `UnicodeEncodeError` no console Windows
+- ✅ Solução: Scripts sem emojis para compatibilidade total
+- ✅ HTML pode usar emojis (UTF-8 no navegador funciona)
+
+### 🎯 Fluxo de Trabalho Estabelecido
+
+**Passo a passo para executar análise de divergências**:
+
+```bash
+# 1. Executar query V3 (gera JSON)
+python executar_query_divergencias.py
+
+# 2. Gerar relatório HTML (lê JSON)
+python gerar_html_simples.py
+
+# 3. Abrir no navegador
+start relatorio_divergencias_v3.html
+```
+
+**Tempo total**: ~20 segundos (autenticação + query + HTML)
+
+### ⚠️ Observações Importantes
+
+#### 1. Limite de 5.000 Registros Atingido
+- Query retornou **exatamente 5.000 registros** (limite do DbExplorer)
+- **Pode haver mais divergências** não retornadas
+- **Recomendação**: Filtrar por período ou adicionar `WHERE` para análises específicas
+
+#### 2. Divergências Críticas Identificadas
+Produtos com maior divergência (amostra):
+- Produto 100004: Múltiplas notas com divergência
+- Produto 100006: Múltiplas notas de compra (TOP 1414)
+- **Total**: ~500+ produtos únicos com divergências
+
+#### 3. Tipos de Operação (TOP) Mais Comuns
+- **1452**: Transferência entre depósitos
+- **1101**: Venda NF-e
+- **1414**: Compra com CT-e
+
+### 🎯 Próximos Passos Sugeridos
+
+#### A. Análise Detalhada das Divergências
+- [ ] Filtrar os 10 produtos com maior divergência total
+- [ ] Investigar causas por tipo de operação (TOP)
+- [ ] Analisar padrão temporal (quando ocorreram)
+- [ ] Propor correções específicas
+
+#### B. Otimização da Query
+- [ ] Adicionar filtros para trazer menos de 5.000 registros
+- [ ] Implementar paginação (TOP 100 por vez)
+- [ ] Criar queries por período (último mês, última semana)
+
+#### C. Automação
+- [ ] Criar script diário de monitoramento
+- [ ] Enviar alertas quando divergências > threshold
+- [ ] Gerar relatório automático via email
 
 ---
 
