@@ -10,7 +10,19 @@
       "Bash(curl:*)",
       "WebFetch(domain:community.sankhya.com.br)",
       "Bash(tree:*)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(where:*)",
+      "Bash(pip show:*)",
+      "Bash(\"C:\\\\Users\\\\italo.gomes\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" testar_azure.py)",
+      "Bash(\"C:\\\\Users\\\\italo.gomes\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" -m pip install azure-storage-file-datalake --quiet)",
+      "Bash(\"C:\\\\Users\\\\italo.gomes\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" -c \"from azure.storage.filedatalake import DataLakeServiceClient; print\\(''OK''\\)\")",
+      "Bash(\"C:\\\\Users\\\\italo.gomes\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" testar_upload_datalake.py)",
+      "Bash(\"C:\\\\Users\\\\italo.gomes\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" limpar_duplicados.py)",
+      "Bash(\"C:\\\\Users\\\\italo.gomes\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" extrair_para_datalake.py --extrator vendedores)",
+      "Bash(\"C:\\\\Users\\\\italo.gomes\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" extrair_para_datalake.py --extrator todos)",
+      "Bash(\"C:\\\\Users\\\\italo.gomes\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" extrair_cadastros_completos.py)",
+      "Bash(\"C:\\\\Users\\\\italo.gomes\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" extrair_cadastros_completos_v2.py)",
+      "Bash(\"C:\\\\Users\\\\italo.gomes\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" extrair_tudo.py)"
     ]
   }
 }

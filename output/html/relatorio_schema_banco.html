@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapeamento Banco Sankhya - MMarra Data Hub</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #00d4ff;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #2d2d44 0%, #1f1f2e 100%);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            border: 1px solid #3d3d5c;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.2);
+        }
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+        .stat-label {
+            color: #888;
+            margin-top: 5px;
+        }
+        .section {
+            background: #1f1f2e;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid #3d3d5c;
+        }
+        .section h2 {
+            color: #00d4ff;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3d3d5c;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #3d3d5c;
+        }
+        th {
+            background: #2d2d44;
+            color: #00d4ff;
+            font-weight: 600;
+        }
+        tr:hover {
+            background: #2d2d44;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+        .badge-tgf { background: #0066cc; color: white; }
+        .badge-tgw { background: #00994d; color: white; }
+        .badge-tsi { background: #9933cc; color: white; }
+        .badge-ad { background: #cc6600; color: white; }
+        .badge-other { background: #666; color: white; }
+        .progress-bar {
+            height: 20px;
+            background: #2d2d44;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #0099ff);
+            border-radius: 10px;
+            transition: width 0.5s;
+        }
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        .module-card {
+            background: #2d2d44;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .module-card:hover {
+            transform: scale(1.05);
+        }
+        .module-name {
+            font-weight: bold;
+            color: #00d4ff;
+        }
+        .module-count {
+            font-size: 1.5em;
+            color: #fff;
+        }
+        .search-box {
+            width: 100%;
+            padding: 12px 20px;
+            border: 2px solid #3d3d5c;
+            border-radius: 25px;
+            background: #1f1f2e;
+            color: #e0e0e0;
+            font-size: 1em;
+            margin-bottom: 20px;
+        }
+        .search-box:focus {
+            outline: none;
+            border-color: #00d4ff;
+        }
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            background: #2d2d44;
+            color: #e0e0e0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .tab-btn:hover, .tab-btn.active {
+            background: #00d4ff;
+            color: #1a1a2e;
+        }
+        .highlight { background: rgba(0, 212, 255, 0.2); }
+        .number { text-align: right; font-family: monospace; }
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            h1 { font-size: 1.8em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Mapeamento Banco Sankhya</h1>
+        <p class="subtitle">MMarra Data Hub - Gerado em 03/02/2026 09:22</p>
+
+        <!-- Estatisticas Gerais -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">4,682</div>
+                <div class="stat-label">Total de Tabelas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">96</div>
+                <div class="stat-label">Modulos/Prefixos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">500</div>
+                <div class="stat-label">Relacionamentos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">100</div>
+                <div class="stat-label">Views</div>
+            </div>
+        </div>
+
+        <!-- TOP 20 Tabelas por Volume -->
+        <div class="section">
+            <h2>TOP 20 Tabelas por Volume de Dados</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Tabela</th>
+                        <th>Modulo</th>
+                        <th class="number">Registros</th>
+                        <th>Volume Relativo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td><strong>TGFITE</strong></td>
+                        <td><span class="badge badge-tgf">Comercial</span></td>
+                        <td class="number">1,102,785</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100.0%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td><strong>TGFPRC</strong></td>
+                        <td><span class="badge badge-tgf">Comercial</span></td>
+                        <td class="number">934,425</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 84.7%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td><strong>TGFPRO</strong></td>
+                        <td><span class="badge badge-tgf">Comercial</span></td>
+                        <td class="number">393,667</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 35.7%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td><strong>TGFEXC</strong></td>
+                        <td><span class="badge badge-tgf">Comercial</span></td>
+                        <td class="number">379,177</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 34.4%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td><strong>TGFCAB</strong></td>
+                        <td><span class="badge badge-tgf">Comercial</span></td>
+                        <td class="number">340,580</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 30.9%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>6</td>
+                        <td><strong>TGFCUS</strong></td>
+                        <td><span class="badge badge-tgf">Comercial</span></td>
+                        <td class="number">288,208</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 26.1%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>7</td>
+                        <td><strong>TGFDIN</strong></td>
+                        <td><span class="badge badge-tgf">Comercial</span></td>
+                        <td class="number">226,421</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 20.5%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>8</td>
+                        <td><strong>TGWEND</strong></td>
+                        <td><span class="badge badge-tgw">WMS</span></td>
+                        <td class="number">85,666</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 7.8%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>9</td>
+                        <td><strong>TGFPAR</strong></td>
+                        <td><span class="badge badge-tgf">Comercial</span></td>
+                        <td class="number">57,081</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 5.2%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>10</td>
+                        <td><strong>TGFFIN</strong></td>
+                        <td><span class="badge badge-tgf">Comercial</span></td>
+                        <td class="number">50,816</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 4.6%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>11</td>
+                        <td><strong>TGWEST</strong></td>
+                        <td><span class="badge badge-tgw">WMS</span></td>
+                        <td class="number">45,413</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 4.1%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>12</td>
+                        <td><strong>TGFEST</strong></td>
+                        <td><span class="badge badge-tgf">Comercial</span></td>
+                        <td class="number">36,574</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 3.3%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>13</td>
+                        <td><strong>TGFVAR</strong></td>
+                        <td><span class="badge badge-tgf">Comercial</span></td>
+                        <td class="number">23,234</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 2.1%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>14</td>
+                        <td><strong>TSIBAI</strong></td>
+                        <td><span class="badge badge-tsi">Sistema</span></td>
+                        <td class="number">13,203</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 1.2%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>15</td>
+                        <td><strong>TGFCPL</strong></td>
+                        <td><span class="badge badge-tgf">Comercial</span></td>
+                        <td class="number">10,375</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 0.9%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>16</td>
+                        <td><strong>TGWCON</strong></td>
+                        <td><span class="badge badge-tgw">WMS</span></td>
+                        <td class="number">8,994</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 0.8%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>17</td>
+                        <td><strong>TGWSEP</strong></td>
+                        <td><span class="badge badge-tgw">WMS</span></td>
+                        <td class="number">8,320</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 0.8%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>18</td>
+                        <td><strong>TGWSXN</strong></td>
+                        <td><span class="badge badge-tgw">WMS</span></td>
+                        <td class="number">8,315</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 0.8%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>19</td>
+                        <td><strong>TSICFG</strong></td>
+                        <td><span class="badge badge-tsi">Sistema</span></td>
+                        <td class="number">7,395</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 0.7%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>20</td>
+                        <td><strong>TGFITC</strong></td>
+                        <td><span class="badge badge-tgf">Comercial</span></td>
+                        <td class="number">6,689</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 0.6%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Modulos/Prefixos -->
+        <div class="section">
+            <h2>Distribuicao por Modulo</h2>
+            <div class="module-grid">
+                <div class="module-card">
+                    <div class="module-name">TGF</div>
+                    <div class="module-count">1456</div>
+                    <div style="color: #888; font-size: 0.8em;">tabelas</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-name">TFP</div>
+                    <div class="module-count">753</div>
+                    <div style="color: #888; font-size: 0.8em;">tabelas</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-name">TSI</div>
+                    <div class="module-count">243</div>
+                    <div style="color: #888; font-size: 0.8em;">tabelas</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-name">TDD</div>
+                    <div class="module-count">242</div>
+                    <div style="color: #888; font-size: 0.8em;">tabelas</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-name">TRD</div>
+                    <div class="module-count">229</div>
+                    <div style="color: #888; font-size: 0.8em;">tabelas</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-name">TIM</div>
+                    <div class="module-count">147</div>
+                    <div style="color: #888; font-size: 0.8em;">tabelas</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-name">AD_</div>
+                    <div class="module-count">139</div>
+                    <div style="color: #888; font-size: 0.8em;">tabelas</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-name">TGW</div>
+                    <div class="module-count">135</div>
+                    <div style="color: #888; font-size: 0.8em;">tabelas</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-name">TCS</div>
+                    <div class="module-count">133</div>
+                    <div style="color: #888; font-size: 0.8em;">tabelas</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-name">TPR</div>
+                    <div class="module-count">119</div>
+                    <div style="color: #888; font-size: 0.8em;">tabelas</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-name">TCB</div>
+                    <div class="module-count">112</div>
+                    <div style="color: #888; font-size: 0.8em;">tabelas</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-name">TRI</div>
+                    <div class="module-count">95</div>
+                    <div style="color: #888; font-size: 0.8em;">tabelas</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-name">TGA</div>
+                    <div class="module-count">71</div>
+                    <div style="color: #888; font-size: 0.8em;">tabelas</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-name">TSE</div>
+                    <div class="module-count">64</div>
+                    <div style="color: #888; font-size: 0.8em;">tabelas</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-name">CMD</div>
+                    <div class="module-count">46</div>
+                    <div style="color: #888; font-size: 0.8em;">tabelas</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-name">TGP</div>
+                    <div class="module-count">35</div>
+                    <div style="color: #888; font-size: 0.8em;">tabelas</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-name">TCA</div>
+                    <div class="module-count">34</div>
+                    <div style="color: #888; font-size: 0.8em;">tabelas</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-name">TFX</div>
+                    <div class="module-count">32</div>
+                    <div style="color: #888; font-size: 0.8em;">tabelas</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-name">TMP</div>
+                    <div class="module-count">32</div>
+                    <div style="color: #888; font-size: 0.8em;">tabelas</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-name">TLF</div>
+                    <div class="module-count">29</div>
+                    <div style="color: #888; font-size: 0.8em;">tabelas</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estrutura das Tabelas Principais -->
+        <div class="section">
+            <h2>Estrutura das Tabelas Principais</h2>
+            <input type="text" class="search-box" id="searchTable" placeholder="Buscar tabela..." onkeyup="filterTables()">
+            <table id="tableDetails">
+                <thead>
+                    <tr>
+                        <th>Tabela</th>
+                        <th>Descricao</th>
+                        <th class="number">Registros</th>
+                        <th class="number">Colunas</th>
+                        <th>Colunas Principais</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>TGFCAB</strong></td>
+                        <td>Cabecalho de Notas (vendas, compras, transferencias)</td>
+                        <td class="number">340,579</td>
+                        <td class="number">422</td>
+                        <td style="font-size: 0.85em; color: #888;">NUNOTA, CODEMP, CODCENCUS, NUMNOTA, SERIENOTA</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TGFCOT</strong></td>
+                        <td>Cotacoes (cabecalho)</td>
+                        <td class="number">2,488</td>
+                        <td class="number">36</td>
+                        <td style="font-size: 0.85em; color: #888;">NUMCOTACAO, DHINIC, DHFINAL, CODUSURESP, PESOPRECO</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TGFEMP</strong></td>
+                        <td>Empresas</td>
+                        <td class="number">9</td>
+                        <td class="number">645</td>
+                        <td style="font-size: 0.85em; color: #888;">CODEMP, EMITEEXPED, IMPEXPED, ULTPAGLIVSAIDA, ULTPAGLIVENTRAD</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TGFEST</strong></td>
+                        <td>Estoque (saldo por empresa/local)</td>
+                        <td class="number">36,574</td>
+                        <td class="number">24</td>
+                        <td style="font-size: 0.85em; color: #888;">CODEMP, CODLOCAL, CODPROD, CONTROLE, RESERVADO</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TGFFIN</strong></td>
+                        <td>Financeiro (titulos a pagar/receber)</td>
+                        <td class="number">50,816</td>
+                        <td class="number">252</td>
+                        <td style="font-size: 0.85em; color: #888;">NUFIN, CODEMP, NUMNOTA, SERIENOTA, DTNEG</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TGFITC</strong></td>
+                        <td>Itens de Cotacao</td>
+                        <td class="number">6,689</td>
+                        <td class="number">78</td>
+                        <td style="font-size: 0.85em; color: #888;">NUMCOTACAO, CODPROD, CODPARC, CONTROLE, CODLOCAL</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TGFITE</strong></td>
+                        <td>Itens das Notas (produtos por nota)</td>
+                        <td class="number">1,102,783</td>
+                        <td class="number">231</td>
+                        <td style="font-size: 0.85em; color: #888;">NUTAB, NUNOTA, SEQUENCIA, CODEMP, CODPROD</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TGFMOV</strong></td>
+                        <td>-</td>
+                        <td class="number">0</td>
+                        <td class="number">0</td>
+                        <td style="font-size: 0.85em; color: #888;">-</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TGFNAT</strong></td>
+                        <td>Naturezas Financeiras</td>
+                        <td class="number">232</td>
+                        <td class="number">39</td>
+                        <td style="font-size: 0.85em; color: #888;">CODNAT, DESCRNAT, INCRESULT, CODCTACTB, CODCENCUS</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TGFPAR</strong></td>
+                        <td>Parceiros (clientes e fornecedores)</td>
+                        <td class="number">57,081</td>
+                        <td class="number">299</td>
+                        <td style="font-size: 0.85em; color: #888;">CODPARC, CODVEND, NOMEPARC, RAZAOSOCIAL, TIPPESSOA</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TGFPRO</strong></td>
+                        <td>Produtos (cadastro de produtos)</td>
+                        <td class="number">393,667</td>
+                        <td class="number">426</td>
+                        <td style="font-size: 0.85em; color: #888;">CODPROD, DESCRPROD, COMPLDESC, CARACTERISTICAS, REFERENCIA</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TGFRES</strong></td>
+                        <td>-</td>
+                        <td class="number">0</td>
+                        <td class="number">15</td>
+                        <td style="font-size: 0.85em; color: #888;">NUMRESERVA, CODEMP, CODLOCAL, CODPROD, CONTROLE</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TGFTOP</strong></td>
+                        <td>Tipos de Operacao (TOP)</td>
+                        <td class="number">1,275</td>
+                        <td class="number">407</td>
+                        <td style="font-size: 0.85em; color: #888;">CODTIPOPER, DHALTER, DESCROPER, TIPMOV, ATUALFIN</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TGFVEN</strong></td>
+                        <td>Vendedores</td>
+                        <td class="number">111</td>
+                        <td class="number">44</td>
+                        <td style="font-size: 0.85em; color: #888;">CODVEND, TIPVEND, APELIDO, CODPARC, CODREG</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TGWEMPE</strong></td>
+                        <td>Empenho (vinculo venda-compra)</td>
+                        <td class="number">1,337</td>
+                        <td class="number">12</td>
+                        <td style="font-size: 0.85em; color: #888;">NUNOTA, CODPROD, CONTROLE, NURECEBIMENTO, CHAVENFE</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TGWEND</strong></td>
+                        <td>Enderecos WMS (localizacoes)</td>
+                        <td class="number">85,666</td>
+                        <td class="number">46</td>
+                        <td style="font-size: 0.85em; color: #888;">CODEND, CODENDPAI, DESCREND, ENDERECO, GRAU</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TGWEST</strong></td>
+                        <td>Estoque WMS (por endereco)</td>
+                        <td class="number">45,414</td>
+                        <td class="number">17</td>
+                        <td style="font-size: 0.85em; color: #888;">CODEMP, CODLOCAL, CODPROD, CONTROLE, CODEND</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TGWREC</strong></td>
+                        <td>Recebimento WMS</td>
+                        <td class="number">1,025</td>
+                        <td class="number">20</td>
+                        <td style="font-size: 0.85em; color: #888;">NURECEBIMENTO, CODDOCA, CODENDDOCA, SITUACAO, DTRECEBIMENTO</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TGWSEP</strong></td>
+                        <td>Separacao WMS (cabecalho)</td>
+                        <td class="number">8,320</td>
+                        <td class="number">36</td>
+                        <td style="font-size: 0.85em; color: #888;">NUSEPARACAO, CODDOCA, CODENDDOCA, SITUACAO, DTSEPARACAO</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TSIEMP</strong></td>
+                        <td>Empresas do Sistema</td>
+                        <td class="number">10</td>
+                        <td class="number">102</td>
+                        <td style="font-size: 0.85em; color: #888;">CODEMP, NOMEFANTASIA, RAZAOSOCIAL, RAZAOABREV, CODEMPMATRIZ</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TSIUSU</strong></td>
+                        <td>Usuarios do Sistema</td>
+                        <td class="number">228</td>
+                        <td class="number">141</td>
+                        <td style="font-size: 0.85em; color: #888;">CODUSU, NOMEUSU, CONTACESSO, DTLIMACESSO, INTERNO</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Relacionamentos -->
+        <div class="section">
+            <h2>Relacionamentos Principais</h2>
+            <p style="color: #888; margin-bottom: 15px;">Foreign Keys entre tabelas principais</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tabela Origem</th>
+                        <th>Coluna</th>
+                        <th style="text-align: center;">→</th>
+                        <th>Tabela Destino</th>
+                        <th>Coluna</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>AD_APONTAORDEM</strong></td>
+                        <td>CODPARC</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPAR</strong></td>
+                        <td>CODPARC</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_APONTAOS</strong></td>
+                        <td>CODPROD</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPRO</strong></td>
+                        <td>CODPROD</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_CABOS</strong></td>
+                        <td>CODPARC</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPAR</strong></td>
+                        <td>CODPARC</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_CABOS</strong></td>
+                        <td>CODPROD_MAT</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPRO</strong></td>
+                        <td>CODPROD</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_CKLISTCAM</strong></td>
+                        <td>CODPARC</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPAR</strong></td>
+                        <td>CODPARC</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_CKLISTMOT</strong></td>
+                        <td>CODPARC</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPAR</strong></td>
+                        <td>CODPARC</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_CKLISTSAIDA</strong></td>
+                        <td>CLIENTE</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPAR</strong></td>
+                        <td>CODPARC</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_CKLISTSAIDAMT</strong></td>
+                        <td>CLIENTE</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPAR</strong></td>
+                        <td>CODPARC</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_COMPLPARC</strong></td>
+                        <td>CODPARC</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPAR</strong></td>
+                        <td>CODPARC</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_COMPLPARC</strong></td>
+                        <td>CODPROD</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPRO</strong></td>
+                        <td>CODPROD</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_COTACOESDEITENS</strong></td>
+                        <td>CODPARC</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPAR</strong></td>
+                        <td>CODPARC</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_FORNEMPPRO</strong></td>
+                        <td>CODPARC</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPAR</strong></td>
+                        <td>CODPARC</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_FORNEMPPRO</strong></td>
+                        <td>CODPROD</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPRO</strong></td>
+                        <td>CODPROD</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_IMPENDLOG</strong></td>
+                        <td>CODPARC</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPAR</strong></td>
+                        <td>CODPARC</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_INTDDA</strong></td>
+                        <td>CODPARC</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPAR</strong></td>
+                        <td>CODPARC</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_INTDDA</strong></td>
+                        <td>NUFIN</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFFIN</strong></td>
+                        <td>NUFIN</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_ITECOMP</strong></td>
+                        <td>CODPROD</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPRO</strong></td>
+                        <td>CODPROD</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_ITEMPEDIDO</strong></td>
+                        <td>CODPROD</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPRO</strong></td>
+                        <td>CODPROD</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_ITEOC</strong></td>
+                        <td>CODPROD</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPRO</strong></td>
+                        <td>CODPROD</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_LAUDOTECOS</strong></td>
+                        <td>CODPARC</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPAR</strong></td>
+                        <td>CODPARC</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_MKPFORNEMPHF</strong></td>
+                        <td>CODPARC</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPAR</strong></td>
+                        <td>CODPARC</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_NATUREZASPARC</strong></td>
+                        <td>CODPARC</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPAR</strong></td>
+                        <td>CODPARC</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_PEDIDOVENDA</strong></td>
+                        <td>CODPARC</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPAR</strong></td>
+                        <td>CODPARC</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_PLANESTPROD</strong></td>
+                        <td>CODPROD</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPRO</strong></td>
+                        <td>CODPROD</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_RECEBCANH</strong></td>
+                        <td>CODPARC</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPAR</strong></td>
+                        <td>CODPARC</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_RECEBCANH</strong></td>
+                        <td>CODPARCTRANSP</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPAR</strong></td>
+                        <td>CODPARC</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_SOLICITACAOCOMPRA</strong></td>
+                        <td>CODPROD</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPRO</strong></td>
+                        <td>CODPROD</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_TABPRCCAB_1</strong></td>
+                        <td>CODPROD</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPRO</strong></td>
+                        <td>CODPROD</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_TGFCUSMMA</strong></td>
+                        <td>CODPROD</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPRO</strong></td>
+                        <td>CODPROD</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AD_TGFPROAUXMMA</strong></td>
+                        <td>CODPROD</td>
+                        <td style="text-align: center; color: #00d4ff;">→</td>
+                        <td><strong>TGFPRO</strong></td>
+                        <td>CODPROD</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Recomendacoes para Extracao -->
+        <div class="section">
+            <h2>Recomendacoes para Extracao de Dados</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Modulo</th>
+                        <th>Tabelas Principais</th>
+                        <th>Prioridade</th>
+                        <th>Observacoes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-tgf">Comercial</span></td>
+                        <td>TGFCAB + TGFITE + TGFPAR + TGFPRO</td>
+                        <td><strong style="color: #00ff88;">ALTA</strong></td>
+                        <td>Vendas, compras, clientes, produtos - core do negocio</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-tgf">Financeiro</span></td>
+                        <td>TGFFIN + TGFNAT</td>
+                        <td><strong style="color: #00ff88;">ALTA</strong></td>
+                        <td>Titulos a pagar/receber, naturezas</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-tgf">Estoque</span></td>
+                        <td>TGFEST + TGWEST + TGWEND</td>
+                        <td><strong style="color: #00ff88;">ALTA</strong></td>
+                        <td>Saldo estoque ERP e WMS por endereco</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-tgw">WMS</span></td>
+                        <td>TGWREC + TGWSEP + TGWEMPE</td>
+                        <td><strong style="color: #ffff00;">MEDIA</strong></td>
+                        <td>Recebimento, separacao, empenho</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-tgf">Cotacao</span></td>
+                        <td>TGFCOT + TGFITC</td>
+                        <td><strong style="color: #ffff00;">MEDIA</strong></td>
+                        <td>Processo de cotacao de compras</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-tgf">Precos</span></td>
+                        <td>TGFPRC + TGFCUS</td>
+                        <td><strong style="color: #ffff00;">MEDIA</strong></td>
+                        <td>Lista de precos e historico de custos</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-tsi">Sistema</span></td>
+                        <td>TSIUSU + TSIEMP + TGFTOP</td>
+                        <td><strong style="color: #888;">BAIXA</strong></td>
+                        <td>Usuarios, empresas, tipos de operacao (auxiliares)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <script>
+        function filterTables() {{
+            const input = document.getElementById('searchTable').value.toLowerCase();
+            const rows = document.querySelectorAll('#tableDetails tbody tr');
+            rows.forEach(row => {{
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(input) ? '' : 'none';
+            }});
+        }}
+    </script>
+</body>
+</html>

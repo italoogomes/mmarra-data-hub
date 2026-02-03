@@ -1,12 +1,324 @@
 # 📊 Progresso da Sessão - MMarra Data Hub
 
-**Data:** 2026-02-02
-**Última Atualização:** 2026-02-02 ✅ QUERY DE EMPENHO COM COTAÇÃO VALIDADA!
-**Versão Atual:** v0.7.0 - Query Empenho + Cotação + Relatório HTML + Documentação Completa
+**Data:** 2026-02-03
+**Última Atualização:** 2026-02-03 ✅ DATA HUB OPERACIONAL - 469.986 REGISTROS NO AZURE!
+**Versão Atual:** v1.0.0 - Data Hub Completo com Extração Automatizada
 
 ---
 
-## 🚀 SESSÃO ATUAL (2026-02-02 Tarde) - QUERY DE GESTÃO DE EMPENHO COM COTAÇÃO! 🚀
+## 🚀 SESSÃO ATUAL (2026-02-03) - DATA HUB OPERACIONAL! 🚀
+
+### 📋 Objetivo
+Transformar o projeto em um Data Hub funcional com extração completa de dados do Sankhya para o Azure Data Lake.
+
+### ✅ Data Hub 100% Operacional!
+
+#### 📊 Dados Extraídos e Carregados no Azure
+
+| Entidade | Registros | Tamanho | Caminho no Data Lake |
+|----------|-----------|---------|----------------------|
+| **Vendedores** | 111 | 0.01 MB | `raw/vendedores/vendedores.parquet` |
+| **Clientes** | 57.082 | 4.02 MB | `raw/clientes/clientes.parquet` |
+| **Produtos** | 393.356 | 9.67 MB | `raw/produtos/produtos.parquet` |
+| **Estoque** | 19.437 | 0.46 MB | `raw/estoque/estoque.parquet` |
+| **TOTAL** | **469.986** | **14.16 MB** | - |
+
+#### 🏗️ Estrutura Criada
+
+**Pasta `src/` completa:**
+```
+src/
+├── __init__.py
+├── config.py                 # Configurações centralizadas
+├── extractors/
+│   ├── __init__.py
+│   ├── base.py              # Classe base abstrata
+│   ├── vendas.py            # Extrator de vendas
+│   ├── clientes.py          # Extrator de clientes
+│   ├── produtos.py          # Extrator de produtos
+│   ├── estoque.py           # Extrator de estoque
+│   └── vendedores.py        # Extrator de vendedores
+└── utils/
+    ├── __init__.py
+    ├── sankhya_client.py    # Cliente API Sankhya
+    └── azure_storage.py     # Cliente Azure Data Lake
+```
+
+**Estrutura no Azure Data Lake (container: datahub):**
+```
+datahub/
+├── raw/
+│   ├── vendedores/vendedores.parquet
+│   ├── clientes/clientes.parquet
+│   ├── produtos/produtos.parquet
+│   ├── estoque/estoque.parquet
+│   └── vendas/ (futuro)
+├── processed/ (futuro)
+└── curated/ (futuro)
+```
+
+#### 📁 Scripts de Extração Criados
+
+| Script | Função |
+|--------|--------|
+| `extrair_tudo.py` | Extração completa usando faixas de 5000 (contorna limite API) |
+| `extrair_cadastros_completos.py` | Extração com paginação (OFFSET/FETCH) |
+| `extrair_cadastros_completos_v2.py` | Extração por faixas de ID |
+| `extrair_para_datalake.py` | Script diário com CLI (`--extrator`) |
+| `limpar_duplicados.py` | Limpeza de arquivos duplicados no Data Lake |
+
+#### 🔧 Configurações
+
+**Arquivo `.env` (mcp_sankhya/):**
+- `SANKHYA_CLIENT_ID` - ID do cliente Sankhya
+- `SANKHYA_CLIENT_SECRET` - Secret do cliente
+- `SANKHYA_TOKEN` - Token do gateway
+- `AZURE_STORAGE_ACCOUNT` - mmarradatalake
+- `AZURE_STORAGE_KEY` - Chave de acesso
+- `AZURE_CONTAINER` - datahub
+
+#### 🛠️ Desafios Superados
+
+1. **Limite de 5000 registros da API Sankhya**
+   - Solução: Extração por faixas de ID (`WHERE campo >= X AND campo < Y`)
+
+2. **Campos inexistentes nas queries**
+   - Removidos: `AD_CODBARRASFAB`, `AD_FAMILIA`, `CEST`, `NOMEVEND`, `QTDRESERVADA`, `DTREF`
+   - Ajustados: `INSCESTAD` → `IDENTINSCESTAD`, `CODBARRASFAB` → `REFERENCIA`
+
+3. **Arquivos duplicados no Data Lake**
+   - Solução: Parâmetro `sobrescrever=True` no upload
+
+### 🎯 Próximos Passos
+
+1. [ ] Agendar extrações diárias (Azure Functions ou cron)
+2. [ ] Extrair dados de VENDAS (TGFCAB + TGFITE)
+3. [ ] Criar camada `processed/` com dados transformados
+4. [ ] Implementar alertas de falha
+5. [ ] Voltar ao caso RIMA (empenhos travados)
+
+### 💬 Mensagem para o Próximo Claude
+
+O Data Hub está operacional! A estrutura completa foi criada:
+- **Python**: Extractors, utils (SankhyaClient, AzureDataLakeClient)
+- **Azure**: Container `datahub` com pasta `raw/` populada
+- **Dados**: ~470k registros de cadastros essenciais
+
+Para extrair novamente: `python extrair_tudo.py`
+Para extração específica: `python extrair_para_datalake.py --extrator clientes`
+
+---
+
+## 📌 SESSÃO ANTERIOR (2026-02-03) - DOCUMENTAÇÃO COMPLETA DE COTAÇÕES! 📌
+
+### 📋 Objetivo
+Completar as pendências da sessão anterior: documentar status, mapear critérios e investigar histórico.
+
+### ✅ Todas as Pendências Concluídas!
+
+#### 1. Status de Cotação Documentados ✅
+
+**STATUSPRODCOT (Item na Cotação - TGFITC):**
+| Código | Descrição | % Sistema |
+|--------|-----------|-----------|
+| **O** | Orçamento (em processo) | 46.84% |
+| **F** | Finalizado (não escolhido) | 35.34% |
+| **C** | Cotado (aguardando decisão) | 17.31% |
+| **A** | Aguardando resposta | 0.28% |
+| **P** | Pendente | 0.22% |
+
+**SITUACAO (Cabeçalho da Cotação - TGFCOT):**
+| Código | Descrição | % Sistema |
+|--------|-----------|-----------|
+| **F** | Finalizada | 54.81% |
+| **C** | Cancelada | 30.58% |
+| **A** | Aberta/Ativa | 12.03% |
+| **E** | Em Elaboração | 2.05% |
+| **P** | Pendente | 0.52% |
+
+**MELHOR (Indicador de Vencedor - TGFITC):**
+- `S` = Fornecedor selecionado como melhor oferta
+- `N` = Não foi escolhido
+- `I` = Indefinido (raro)
+
+**Estatística importante:** 2.547 itens com MELHOR='S', destes 2.359 (92.6%) geraram pedido de compra.
+
+#### 2. Critérios de Seleção Mapeados ✅
+
+**Campos de peso encontrados em TGFCOT:**
+- `PESOPRECO` - Peso do critério Preço
+- `PESOCONDPAG` - Peso da Condição de Pagamento
+- `PESOPRAZOENTREG` - Peso do Prazo de Entrega
+- `PESOQUALPROD` - Peso da Qualidade do Produto
+- `PESOCONFIABFORN` - Peso da Confiabilidade do Fornecedor
+- `PESOQUALATEND` - Peso da Qualidade do Atendimento
+- `PESOGARANTIA` - Peso da Garantia
+- `PESOTAXAJURO` - Peso da Taxa de Juros
+- `PESOAVALFORNEC` - Peso da Avaliação do Fornecedor
+
+**Descoberta importante:** Atualmente **apenas PREÇO é usado** (peso=1.0, todos outros=0.0).
+
+#### 3. Histórico de Cotações Investigado ✅
+
+**Conclusão:** NÃO existe tabela de histórico dedicada.
+
+**Tabelas auxiliares encontradas:**
+- `TGFITC_COT` - Temporária/consolidação (10 registros)
+- `TGFITC_DLT` - Itens deletados (vazia)
+- `AD_COTACOESDEITENS` - Customizada/workflow (vazia)
+- `TSICOT` - Cotação de MOEDAS (não de compras!)
+
+**Rastreabilidade disponível:**
+- `TGFCOT.DTALTER` - Última alteração
+- `TGFCOT.CODUSU` - Usuário (pode ser NULL)
+- `TGFCOT.DHINIC/DHFINAL` - Período
+
+#### 4. Guia de Parâmetros Criado ✅
+
+**22 parâmetros documentados** para uso no Sankhya:
+- Filtros por pedido, empresa, cliente, vendedor
+- Filtros por período (negociação, previsão)
+- Filtros por valor, produto
+- Filtros por status (empenho, WMS, logístico)
+- Filtros por cotação (número, status, responsável)
+
+### 📁 Scripts Criados Nesta Sessão
+
+1. ✅ `investigar_status_cotacao.py` - Descobre todos os status
+2. ✅ `investigar_contexto_status.py` - Analisa contexto de uso
+3. ✅ `investigar_historico_cotacao.py` - Busca tabelas de histórico
+4. ✅ `investigar_tabelas_auxiliares.py` - Analisa tabelas relacionadas
+
+### 📚 Documentação Atualizada
+
+**Arquivo:** `docs/de-para/sankhya/empenho-cotacao.md`
+**Versão:** 1.0.0 → 1.1.0
+
+**Novas seções adicionadas:**
+- DE-PARA: Códigos de Status (STATUSPRODCOT, SITUACAO, MELHOR)
+- Critérios de Seleção (Pesos)
+- Histórico de Cotações
+- Guia de Parâmetros para uso no Sankhya
+
+### 🎯 Próximos Passos Sugeridos
+
+- [ ] Criar dashboard no Sankhya usando a query com parâmetros
+- [ ] Configurar outros critérios de seleção além de preço
+- [ ] Implementar trigger de auditoria (se necessário)
+- [ ] Criar relatório de análise de cotações por fornecedor
+
+---
+
+## 🗄️ MAPEAMENTO COMPLETO DO BANCO (2026-02-03) 🗄️
+
+### 📋 Objetivo
+Fazer varredura completa do banco Sankhya para entender estrutura, tabelas, relacionamentos e preparar para extrações.
+
+### ✅ Mapeamento Concluído!
+
+#### 📊 Estatísticas do Banco
+
+| Métrica | Valor |
+|---------|-------|
+| **Total de Tabelas** | 4.682 |
+| **Módulos/Prefixos** | 96 |
+| **Relacionamentos (FK)** | 500+ mapeados |
+| **Views** | 100+ |
+
+#### 🏆 TOP 10 Tabelas por Volume
+
+| # | Tabela | Registros | Descrição |
+|---|--------|-----------|-----------|
+| 1 | TGFITE | 1.102.785 | Itens das Notas |
+| 2 | TGFPRC | 934.425 | Lista de Preços |
+| 3 | TGFPRO | 393.667 | Produtos |
+| 4 | TGFEXC | 379.177 | Exceções Fiscais |
+| 5 | TGFCAB | 340.580 | Cabeçalho Notas |
+| 6 | TGFCUS | 288.208 | Custos |
+| 7 | TGFDIN | 226.421 | Campos Dinâmicos |
+| 8 | TGWEND | 85.666 | Endereços WMS |
+| 9 | TGFPAR | 57.081 | Parceiros |
+| 10 | TGFFIN | 50.816 | Financeiro |
+
+#### 📁 Principais Módulos
+
+| Prefixo | Tabelas | Descrição |
+|---------|---------|-----------|
+| **TGF** | 1.456 | Gestão Financeira/Comercial (CORE) |
+| **TFP** | 753 | Fiscal/Produção |
+| **TSI** | 243 | Sistema/Infraestrutura |
+| **TDD** | 242 | Definição de Dados |
+| **TRD** | 229 | Relatórios/Dashboards |
+| **TIM** | 147 | Importação/Integração |
+| **AD_** | 139 | Tabelas Customizadas MMarra |
+| **TGW** | 135 | WMS |
+
+#### 📋 Tabelas Principais para Extração
+
+**Comercial (ALTA prioridade):**
+- `TGFCAB` (340k) - Cabeçalho de notas
+- `TGFITE` (1.1M) - Itens das notas
+- `TGFPAR` (57k) - Parceiros
+- `TGFPRO` (393k) - Produtos
+
+**Financeiro:**
+- `TGFFIN` (50k) - Títulos a pagar/receber
+- `TGFNAT` (232) - Naturezas
+
+**Estoque:**
+- `TGFEST` (36k) - Estoque ERP
+- `TGWEST` (45k) - Estoque WMS
+- `TGWEND` (85k) - Endereços
+
+**WMS:**
+- `TGWREC` (1k) - Recebimento
+- `TGWSEP` (8k) - Separação
+- `TGWEMPE` (1.3k) - Empenho
+
+### 📁 Arquivos Criados
+
+**Scripts de Mapeamento:**
+1. ✅ `mapear_banco_completo.py` - Varredura geral
+2. ✅ `mapear_tabelas_volume.py` - Contagem por tabela
+3. ✅ `gerar_relatorio_schema.py` - Gerador de relatório HTML
+
+**Arquivos de Resultado:**
+4. ✅ `mapeamento_banco_sankhya.json` - JSON completo
+5. ✅ `tabelas_por_volume.json` - Contagem de registros
+6. ✅ `relatorio_schema_banco.html` - Relatório visual interativo
+
+**Documentação:**
+7. ✅ `docs/schema-banco-sankhya.md` - Documentação completa do schema
+
+### 🔗 Relacionamentos Principais Mapeados
+
+```
+TGFCAB.CODPARC → TGFPAR.CODPARC
+TGFITE.NUNOTA → TGFCAB.NUNOTA
+TGFITE.CODPROD → TGFPRO.CODPROD
+TGFFIN.NUNOTA → TGFCAB.NUNOTA
+TGFEST.CODPROD → TGFPRO.CODPROD
+TGWEST.CODEND → TGWEND.CODEND
+TGWEMPE.NUNOTAPEDVEN → TGFCAB.NUNOTA
+```
+
+### 🚀 Próximos Passos para Extração
+
+1. [ ] Criar script de extração de VENDAS (TGFCAB + TGFITE)
+2. [ ] Criar script de extração de CLIENTES (TGFPAR)
+3. [ ] Criar script de extração de PRODUTOS (TGFPRO)
+4. [ ] Criar script de extração de ESTOQUE (TGFEST + TGWEST)
+5. [ ] Configurar Azure Data Lake para armazenar os dados
+
+---
+
+## 🔄 SESSÃO ANTERIOR (2026-02-03 Manhã) - DOCUMENTAÇÃO DE STATUS 🔄
+
+(ver seção acima - Status de Cotação documentados)
+
+---
+
+## 🔄 SESSÃO ANTERIOR (2026-02-02 Tarde) - QUERY DE GESTÃO DE EMPENHO COM COTAÇÃO! 🔄
 
 ### 📋 Objetivo
 Adicionar campos de cotação (Nome Responsável, Código Cotação, Status) à query de gestão de empenho por fornecedor.

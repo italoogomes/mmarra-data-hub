@@ -10,10 +10,62 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 ## [Não Lançado]
 
 ### 🔄 Em Desenvolvimento
-- Script Python de extração de compras (CRÍTICO - Bloqueador para Data Lake)
-- Integração com Azure Data Lake (CRÍTICO - Bloqueador para Central de Dados)
-- Agentes de IA (CRÍTICO - Bloqueador para Inteligência)
-- Investigação de casos críticos (produtos 261302 e 263340)
+- Extração de dados de VENDAS (TGFCAB + TGFITE)
+- Agendamento automático de extrações
+- Camada `processed/` com transformações
+- Agentes de IA para análise de dados
+
+---
+
+## [1.0.0] - 2026-02-03 🎉 DATA HUB OPERACIONAL!
+
+### 🎉 Marco Principal
+**Data Hub 100% funcional** - 469.986 registros extraídos e carregados no Azure Data Lake!
+
+### ✅ Adicionado
+
+#### 1. Estrutura Completa do Projeto
+```
+src/
+├── config.py                 # Configurações centralizadas (.env)
+├── extractors/              # Extratores de dados
+│   ├── base.py              # Classe base abstrata
+│   ├── vendas.py            # Vendas
+│   ├── clientes.py          # Clientes/Parceiros
+│   ├── produtos.py          # Produtos
+│   ├── estoque.py           # Estoque
+│   └── vendedores.py        # Vendedores/Compradores
+└── utils/
+    ├── sankhya_client.py    # Cliente API Sankhya
+    └── azure_storage.py     # Cliente Azure Data Lake
+```
+
+#### 2. Conexão com Azure Data Lake
+- Container: `datahub`
+- Storage Account: `mmarradatalake`
+- Estrutura: `raw/`, `processed/`, `curated/`
+- Formato: Parquet
+
+#### 3. Scripts de Extração
+| Script | Função |
+|--------|--------|
+| `extrair_tudo.py` | Extração completa (faixas de 5000) |
+| `extrair_para_datalake.py` | CLI para extrações (`--extrator`) |
+| `limpar_duplicados.py` | Limpeza de duplicados |
+
+#### 4. Dados Extraídos
+| Entidade | Registros | Tamanho |
+|----------|-----------|---------|
+| Vendedores | 111 | 0.01 MB |
+| Clientes | 57.082 | 4.02 MB |
+| Produtos | 393.356 | 9.67 MB |
+| Estoque | 19.437 | 0.46 MB |
+| **TOTAL** | **469.986** | **14.16 MB** |
+
+### 🛠️ Corrigido
+- Campos inexistentes nas queries (AD_CODBARRASFAB, AD_FAMILIA, CEST, etc.)
+- Limite de 5000 registros da API (solução: extração por faixas)
+- Duplicação de arquivos no upload (parâmetro sobrescrever=True)
 
 ---
 

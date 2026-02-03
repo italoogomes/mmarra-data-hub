@@ -1,0 +1,21 @@
+# MMarra Data Hub - Dependencias
+
+# Requisicoes HTTP
+requests>=2.31.0
+
+# Manipulacao de dados
+pandas>=2.0.0
+
+# Formato Parquet
+pyarrow>=14.0.0
+
+# Variaveis de ambiente
+python-dotenv>=1.0.0
+
+# Azure Data Lake
+azure-storage-file-datalake>=12.14.0
+
+# Agentes de IA (LangChain)
+langchain>=0.1.0
+langchain-openai>=0.0.5
+openai>=1.0.0

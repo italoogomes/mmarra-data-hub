@@ -1,0 +1,209 @@
+{
+  "data": "2026-02-03T09:01:25.427069",
+  "tabelas_por_volume": [
+    {
+      "tabela": "TGFITE",
+      "registros": 1102785
+    },
+    {
+      "tabela": "TGFPRC",
+      "registros": 934425
+    },
+    {
+      "tabela": "TGFPRO",
+      "registros": 393667
+    },
+    {
+      "tabela": "TGFEXC",
+      "registros": 379177
+    },
+    {
+      "tabela": "TGFCAB",
+      "registros": 340580
+    },
+    {
+      "tabela": "TGFCUS",
+      "registros": 288208
+    },
+    {
+      "tabela": "TGFDIN",
+      "registros": 226421
+    },
+    {
+      "tabela": "TGWEND",
+      "registros": 85666
+    },
+    {
+      "tabela": "TGFPAR",
+      "registros": 57081
+    },
+    {
+      "tabela": "TGFFIN",
+      "registros": 50816
+    },
+    {
+      "tabela": "TGWEST",
+      "registros": 45413
+    },
+    {
+      "tabela": "TGFEST",
+      "registros": 36574
+    },
+    {
+      "tabela": "TGFVAR",
+      "registros": 23234
+    },
+    {
+      "tabela": "TSIBAI",
+      "registros": 13203
+    },
+    {
+      "tabela": "TGFCPL",
+      "registros": 10375
+    },
+    {
+      "tabela": "TGWCON",
+      "registros": 8994
+    },
+    {
+      "tabela": "TGWSEP",
+      "registros": 8320
+    },
+    {
+      "tabela": "TGWSXN",
+      "registros": 8315
+    },
+    {
+      "tabela": "TSICFG",
+      "registros": 7395
+    },
+    {
+      "tabela": "TGFITC",
+      "registros": 6689
+    },
+    {
+      "tabela": "TSICID",
+      "registros": 5608
+    },
+    {
+      "tabela": "TGFCOT",
+      "registros": 2488
+    },
+    {
+      "tabela": "TGFMAR",
+      "registros": 1440
+    },
+    {
+      "tabela": "TGWEMPE",
+      "registros": 1337
+    },
+    {
+      "tabela": "TGFTOP",
+      "registros": 1275
+    },
+    {
+      "tabela": "TGWREC",
+      "registros": 1025
+    },
+    {
+      "tabela": "TGWRXN",
+      "registros": 1025
+    },
+    {
+      "tabela": "TGFCFO",
+      "registros": 635
+    },
+    {
+      "tabela": "TGFTPV",
+      "registros": 440
+    },
+    {
+      "tabela": "TSICEP",
+      "registros": 243
+    },
+    {
+      "tabela": "TGFNAT",
+      "registros": 232
+    },
+    {
+      "tabela": "TSIUSU",
+      "registros": 228
+    },
+    {
+      "tabela": "TGFVOL",
+      "registros": 225
+    },
+    {
+      "tabela": "TGFVEN",
+      "registros": 111
+    },
+    {
+      "tabela": "TSILOG",
+      "registros": 106
+    },
+    {
+      "tabela": "TSIAGE",
+      "registros": 14
+    },
+    {
+      "tabela": "TSIEMP",
+      "registros": 10
+    },
+    {
+      "tabela": "TGFEMP",
+      "registros": 9
+    },
+    {
+      "tabela": "TGFREG",
+      "registros": 5
+    },
+    {
+      "tabela": "TSIPER",
+      "registros": 3
+    },
+    {
+      "tabela": "TGFTIP",
+      "registros": 1
+    },
+    {
+      "tabela": "TGFRES",
+      "registros": 0
+    },
+    {
+      "tabela": "TGFIMP",
+      "registros": 0
+    },
+    {
+      "tabela": "TGFIPO",
+      "registros": 0
+    },
+    {
+      "tabela": "TGFLOT",
+      "registros": 0
+    },
+    {
+      "tabela": "TGFSER",
+      "registros": 0
+    },
+    {
+      "tabela": "TGFACO",
+      "registros": 0
+    },
+    {
+      "tabela": "TGFAGD",
+      "registros": 0
+    },
+    {
+      "tabela": "TGWARM",
+      "registros": 0
+    },
+    {
+      "tabela": "TGWINV",
+      "registros": 0
+    },
+    {
+      "tabela": "AD_COTACOESDEITENS",
+      "registros": 0
+    }
+  ]
+}
