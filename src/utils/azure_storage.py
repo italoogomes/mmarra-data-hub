@@ -91,7 +91,7 @@ class AzureDataLakeClient:
 
     def upload_arquivo(
         self,
-        arquivo_local: Path,
+        arquivo_local,
         caminho_destino: str,
         sobrescrever: bool = True
     ) -> bool:
@@ -99,7 +99,7 @@ class AzureDataLakeClient:
         Faz upload de um arquivo para o Data Lake.
 
         Args:
-            arquivo_local: Path do arquivo local
+            arquivo_local: Path ou string do arquivo local
             caminho_destino: Caminho no Data Lake (ex: 'raw/vendas/arquivo.parquet')
             sobrescrever: Se deve sobrescrever se existir
 
@@ -107,6 +107,9 @@ class AzureDataLakeClient:
             True se sucesso
         """
         try:
+            # Garantir que arquivo_local seja Path
+            arquivo_local = Path(arquivo_local)
+
             fs_client = self._get_file_system_client()
 
             # Separar diretório e nome do arquivo

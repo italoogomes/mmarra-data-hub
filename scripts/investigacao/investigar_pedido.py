@@ -7,7 +7,8 @@ import os
 import requests
 from dotenv import load_dotenv
 
-env_path = os.path.join(os.path.dirname(__file__), 'mcp_sankhya', '.env')
+# Subir 2 níveis (scripts/investigacao -> raiz) e entrar em mcp_sankhya
+env_path = os.path.join(os.path.dirname(__file__), '..', '..', 'mcp_sankhya', '.env')
 load_dotenv(env_path)
 
 CLIENT_ID = os.getenv('SANKHYA_CLIENT_ID')

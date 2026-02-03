@@ -40,6 +40,3 @@ DEFAULT_TIMEOUT = 120  # Segundos
 AZURE_STORAGE_ACCOUNT = os.getenv('AZURE_STORAGE_ACCOUNT', '')
 AZURE_STORAGE_KEY = os.getenv('AZURE_STORAGE_KEY', '')
 AZURE_CONTAINER = os.getenv('AZURE_CONTAINER', 'datahub')
-
-# OpenAI (para agentes de IA)
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')

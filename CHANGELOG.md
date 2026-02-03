@@ -10,10 +10,182 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 ## [Não Lançado]
 
 ### 🔄 Em Desenvolvimento
-- Extração de dados de VENDAS (TGFCAB + TGFITE)
-- Agendamento automático de extrações
-- Camada `processed/` com transformações
-- Agentes de IA para análise de dados
+- Agente Analista (KPIs, relatórios, dashboards)
+- Agente Cientista (ML, previsões, anomalias)
+- Agente LLM (chat natural, SQL, RAG)
+- Camada `processed/` com transformações avançadas
+
+---
+
+## [1.3.0] - 2026-02-03 📊 RELATÓRIOS DE GESTÃO
+
+### 🎉 Marco Principal
+**Relatórios de Gestão com Detecção de Inconsistências** - Empenho V2 + Canhotos + WMS
+
+### ✅ Adicionado
+
+#### 1. Query Recebimento de Canhotos
+- `queries/query_recebimento_canhoto.sql`
+- Dados de AD_RECEBCANH + TGWREC + tabelas auxiliares
+- Status WMS mapeado (Pendente → Armazenado)
+
+#### 2. Relatório Gestão de Empenho V2 - Novas Colunas
+- `NUM_UNICO_COMPRA_COTACAO` - Compra originada da cotação
+- `TEM_XML` - Se a compra tem chave NFe (Sim/Não)
+- `DATA_ENTRADA_COMPRA` - Data de entrada da compra
+- `STATUS_WMS_COMPRA` - Status detalhado do WMS
+
+#### 3. Status WMS Detalhado
+| Status | Significado |
+|--------|-------------|
+| Aguardando envio WMS | Nota não enviada ao WMS |
+| Aguardando conferencia | SITUACAO = 0 |
+| Em Recebimento | SITUACAO = 2 |
+| Conferido | SITUACAO = 4 |
+| Armazenado | SITUACAO = 6 |
+
+#### 4. Detecção de Inconsistências
+- Detecta quando compra da cotação ≠ compra do empenho
+- Sinaliza com status "Verificar inconsistencia"
+- Cor laranja para destacar
+
+#### 5. Scripts de Investigação
+- `investigar_xml_compra.py` - Campos XML/NFe
+- `investigar_wms_pedido.py` - Status WMS detalhado
+
+---
+
+## [1.2.0] - 2026-02-03 🤖 AGENTE ENGENHEIRO DE DADOS
+
+### 🎉 Marco Principal
+**Agente Engenheiro de Dados 100% Operacional** - Pipeline ETL automatizado com upload para Azure!
+
+### ✅ Adicionado
+
+#### 1. Agente Engenheiro de Dados
+Módulo Python permanente para ETL (Extract-Transform-Load).
+
+```
+src/agents/engineer/
+├── __init__.py              # Exports: Orchestrator, Scheduler
+├── config.py                # Configurações do agente
+├── orchestrator.py          # Coordena E-T-L
+├── scheduler.py             # Agendamento de execuções
+│
+├── extractors/              # EXTRACT (5 entidades)
+│   ├── base.py              # Classe base abstrata
+│   ├── clientes.py          # ClientesExtractor
+│   ├── vendas.py            # VendasExtractor
+│   ├── produtos.py          # ProdutosExtractor
+│   ├── estoque.py           # EstoqueExtractor
+│   └── vendedores.py        # VendedoresExtractor
+│
+├── transformers/            # TRANSFORM
+│   ├── cleaner.py           # DataCleaner
+│   └── mapper.py            # DataMapper
+│
+└── loaders/                 # LOAD
+    └── datalake.py          # DataLakeLoader
+```
+
+#### 2. Componentes do Pipeline
+
+| Componente | Função |
+|------------|--------|
+| **BaseExtractor** | Classe abstrata com extract() e extract_by_range() |
+| **DataCleaner** | Remove duplicatas, normaliza strings, valida tipos |
+| **DataMapper** | Renomeia colunas, mapeia valores |
+| **DataLakeLoader** | Salva Parquet + upload Azure |
+| **Orchestrator** | Coordena E-T-L para múltiplas entidades |
+| **Scheduler** | Agendamento periódico (diário, horário) |
+
+#### 3. Documentação dos Agentes
+- `docs/agentes/README.md` - Visão geral de todos os agentes
+- `docs/agentes/engineer.md` - Documentação completa do Agente Engenheiro
+
+### 🛠️ Corrigido
+
+#### 1. UnicodeEncodeError no Windows (orchestrator.py)
+- **Problema**: Caracteres `✓` e `✗` não suportados pelo encoding cp1252
+- **Solução**: Substituídos por `[OK]` e `[X]`
+- **Arquivo**: `src/agents/engineer/orchestrator.py:308`
+
+#### 2. AttributeError no upload Azure (azure_storage.py)
+- **Problema**: `'str' object has no attribute 'name'`
+- **Causa**: Parâmetro `arquivo_local` recebido como string, mas código usava `.name`
+- **Solução**: Converter para Path antes de usar atributos
+- **Arquivo**: `src/utils/azure_storage.py:92-111`
+
+### 📊 Resultado da Execução
+
+```
+============================================================
+AGENTE ENGENHEIRO DE DADOS - Pipeline ETL
+============================================================
+  [OK] vendedores  :        111 registros |   0.01 MB
+  [OK] clientes    :     57.087 registros |   4.02 MB
+  [OK] produtos    :    393.361 registros |   9.67 MB
+  [OK] estoque     :     19.431 registros |   0.46 MB
+  [OK] vendas      :      5.000 registros |   0.XX MB
+------------------------------------------------------------
+  TOTAL:    ~475.000 registros |  ~14.16 MB
+  Status: 5/5 bem-sucedidas
+============================================================
+```
+
+### 🚀 Como Usar
+
+```bash
+# Pipeline completo
+python -m src.agents.engineer.orchestrator
+
+# Entidades específicas
+python -m src.agents.engineer.orchestrator --entities clientes produtos
+
+# Sem upload para Azure
+python -m src.agents.engineer.orchestrator --no-upload
+```
+
+```python
+# Via código Python
+from src.agents.engineer import Orchestrator
+
+orchestrator = Orchestrator()
+results = orchestrator.run_full_pipeline()
+```
+
+### 🎯 Arquitetura dos Agentes
+
+| Agente | Função | Usa LLM? | Status |
+|--------|--------|----------|--------|
+| **Engenheiro** | ETL: Sankhya → Data Lake | ❌ Não | ✅ Operacional |
+| **Analista** | KPIs, relatórios, dashboards | ❌ Não | 📋 Futuro |
+| **Cientista** | ML, previsões, anomalias | ❌ Não | 📋 Futuro |
+| **LLM** | Chat natural, SQL, RAG | ✅ Sim | 📋 Futuro |
+
+---
+
+## [1.1.0] - 2026-02-03 🔍 QUERY V2 COTAÇÃO x EMPENHO
+
+### ✅ Adicionado
+
+#### Detecção de Inconsistência Cotação x Empenho
+- Query V2 com dois caminhos de busca de cotação
+- Via Empenho (caminho original)
+- Via Solicitação (caminho novo)
+- Detecção automática de inconsistências
+
+#### Resultados
+| Métrica | Valor |
+|---------|-------|
+| Total de registros | 2.145 |
+| Com cotação | 1.885 |
+| **INCONSISTÊNCIAS** | **312** |
+
+#### Arquivos Criados
+- `queries/query_empenho_com_cotacao_v2.sql`
+- `scripts/investigacao/investigar_cotacao_pedido*.py`
+- `output/html/relatorio_empenho_cotacao_v2.html`
 
 ---
 
@@ -481,4 +653,4 @@ start relatorio_divergencias_v3.html
 
 ---
 
-**Última atualização:** 2026-01-30
+**Última atualização:** 2026-02-03

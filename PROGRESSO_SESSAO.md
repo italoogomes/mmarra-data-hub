@@ -1,12 +1,328 @@
 # 📊 Progresso da Sessão - MMarra Data Hub
 
 **Data:** 2026-02-03
-**Última Atualização:** 2026-02-03 ✅ DATA HUB OPERACIONAL - 469.986 REGISTROS NO AZURE!
-**Versão Atual:** v1.0.0 - Data Hub Completo com Extração Automatizada
+**Última Atualização:** 2026-02-03 - Agente Engenheiro + Caso RIMA
+**Versão Atual:** v1.3.0 - Relatórios de Gestão com Detecção de Inconsistências
 
 ---
 
-## 🚀 SESSÃO ATUAL (2026-02-03) - DATA HUB OPERACIONAL! 🚀
+## 🔥 PENDENTE - CASO RIMA (1183490) 🔥
+
+### Situação Identificada
+- **Pedido 1183490**: Cancelado/deletado, mas **8 empenhos ainda travados**
+- **Pedido 1192177**: Faturado (NF 5146), mas **12 itens sem empenho** por causa do 1183490
+- **Pedido 1192208**: Faturado (NF 5146), item 446518 OK
+
+### Empenhos Travados no 1183490
+| CODPROD | QTDEMP | COMPRA | Produto |
+|---------|--------|--------|---------|
+| 104319 | 2 | 1186348 | TAMPA PLASTICA FILTRO COMBUSTIVEL |
+| 116860 | 2 | 1185251 | MANGUEIRA RETORNO TURBINA MWM |
+| 141544 | 1 | 1185251 | CILINDRO ACIONAMENTO FREIO |
+| 158802 | 9 | 1187308 | JOGO LONA FREIO |
+| 187790 | 2 | 1186348 | TAMPA FILTRO OLEO LUBRIFICANTE |
+| 244788 | 1 | 1190435 | COMPRESSOR AR MBB MONO |
+| 304061 | 2 | 1186348 | VALVULA ALIVIO RETENCAO |
+| 449061 | 2 | 1185251 | MANGUEIRA SUPERIOR RADIADOR |
+
+### Ação Necessária
+**Liberar empenhos do pedido cancelado:**
+- Via Sankhya: Central de Empenho → Buscar 1183490 → Cancelar
+- Via SQL: `DELETE FROM TGWEMPE WHERE NUNOTAPEDVEN = 1183490;`
+
+### Script de Investigação
+```bash
+python scripts/investigacao/investigar_caso_rima.py
+```
+
+---
+
+## 🔥 SESSÃO ATUAL (2026-02-03) - RELATÓRIOS EMPENHO + CANHOTO + WMS 🔥
+
+### 📋 Objetivo
+Criar e melhorar relatórios de gestão de empenho com detecção de inconsistências entre cotação e empenho, e relatório de recebimento de canhotos com status WMS.
+
+### ✅ O que foi feito nesta sessão
+
+#### 1. Query Recebimento de Canhotos
+- **Arquivo criado:** `queries/query_recebimento_canhoto.sql`
+- Inclui dados de AD_RECEBCANH + TGWREC + tabelas auxiliares
+- Status WMS mapeado (Pendente → Armazenado)
+
+#### 2. Relatório Gestão de Empenho V2 - Melhorias
+
+**Novas colunas adicionadas:**
+
+| Coluna | Descrição |
+|--------|-----------|
+| `NUM_UNICO_COMPRA_COTACAO` | Número único da compra originada da cotação |
+| `TEM_XML` | Se a compra tem chave NFe (Sim/Não) |
+| `DATA_ENTRADA_COMPRA` | Data que a compra deu entrada |
+| `STATUS_WMS_COMPRA` | Status detalhado do WMS da compra |
+
+**Status WMS detalhado:**
+
+| Status | Significado |
+|--------|-------------|
+| `Aguardando envio WMS` | Nota não foi enviada ao WMS ainda |
+| `Aguardando conferencia` | Está no WMS, SITUACAO = 0 |
+| `Em Recebimento` | SITUACAO = 2 |
+| `Em Conferencia` | SITUACAO = 3 |
+| `Conferido` | SITUACAO = 4 |
+| `Em Armazenagem` | SITUACAO = 5 |
+| `Armazenado` | SITUACAO = 6 |
+| `Sem compra` | Não tem compra vinculada |
+
+#### 3. Detecção de Inconsistências
+
+O relatório agora detecta quando:
+- A compra da **cotação** é diferente da compra do **empenho**
+- Mostra as duas informações para comparação
+- Sinaliza com status "Verificar inconsistencia" e cor laranja
+
+**Exemplo analisado (pedido 1167789):**
+- Cotação 11 gerou compra 1172049
+- Mas empenho foi vinculado à compra NF 328369 (diferente)
+- Sistema detectou e sinalizou a inconsistência
+
+#### 4. Scripts de Investigação Criados
+
+| Script | Função |
+|--------|--------|
+| `investigar_xml_compra.py` | Investiga campos XML/NFe da TGFCAB |
+| `investigar_wms_pedido.py` | Investiga status WMS detalhado de um pedido |
+
+### 📁 Arquivos Modificados/Criados
+
+```
+queries/
+├── query_recebimento_canhoto.sql     # NOVO - Query canhotos
+└── query_empenho_com_cotacao_v2.sql  # MODIFICADO - Novas colunas
+
+scripts/investigacao/
+├── investigar_xml_compra.py          # NOVO
+└── investigar_wms_pedido.py          # NOVO
+
+output/html/
+├── relatorio_empenho_cotacao_v2.html # ATUALIZADO
+└── relatorio_recebimento_canhoto.html
+```
+
+### 💬 Mensagem para o Próximo Claude
+
+Os relatórios de gestão estão funcionando:
+
+1. **Empenho V2** (`query_empenho_com_cotacao_v2.sql`):
+   - Detecta inconsistência cotação vs empenho
+   - Mostra status WMS detalhado da compra
+   - Mostra se tem XML e data de entrada
+
+2. **Canhotos** (`query_recebimento_canhoto.sql`):
+   - Mostra recebimentos da AD_RECEBCANH
+   - Inclui status WMS (TGWREC)
+
+Para gerar os relatórios:
+```bash
+# Empenho V2
+python scripts/investigacao/testar_query_v2.py
+python scripts/investigacao/gerar_html_v2.py
+
+# Canhotos
+python scripts/investigacao/extrair_canhoto.py
+python scripts/investigacao/gerar_html_canhoto.py
+```
+
+---
+
+## 🔧 SESSÃO ANTERIOR (2026-02-03) - AGENTE ENGENHEIRO DE DADOS 🔧
+
+### 📋 Objetivo
+Criar o Agente Engenheiro de Dados como módulo Python permanente para ETL (Extract-Transform-Load).
+
+### ✅ Agente Engenheiro Criado e Operacional!
+
+#### 🏗️ Estrutura Implementada
+
+```
+src/agents/engineer/
+├── __init__.py              # Exports: Orchestrator, Scheduler
+├── config.py                # Configurações do agente
+├── orchestrator.py          # Coordena E-T-L
+├── scheduler.py             # Agendamento de execuções
+│
+├── extractors/              # EXTRACT
+│   ├── __init__.py
+│   ├── base.py              # Classe base abstrata
+│   ├── clientes.py          # ClientesExtractor
+│   ├── vendas.py            # VendasExtractor
+│   ├── produtos.py          # ProdutosExtractor
+│   ├── estoque.py           # EstoqueExtractor
+│   └── vendedores.py        # VendedoresExtractor
+│
+├── transformers/            # TRANSFORM
+│   ├── __init__.py
+│   ├── cleaner.py           # DataCleaner
+│   └── mapper.py            # DataMapper
+│
+└── loaders/                 # LOAD
+    ├── __init__.py
+    └── datalake.py          # DataLakeLoader
+```
+
+#### 📊 Resultado da Execução
+
+| Entidade | Registros | Tamanho | Upload Azure |
+|----------|-----------|---------|--------------|
+| vendedores | 111 | 0.01 MB | [OK] |
+| clientes | 57,087 | 4.02 MB | [OK] |
+| produtos | 393,361 | 9.67 MB | [OK] |
+| estoque | 19,431 | 0.46 MB | [OK] |
+| vendas | 5,000 | - | [OK] |
+| **TOTAL** | **~475,000** | **~14 MB** | **[OK]** |
+
+#### 🐛 Bugs Corrigidos
+
+1. **UnicodeEncodeError no Windows** (orchestrator.py:308)
+   - Problema: Caracteres `✓` e `✗` não suportados pelo cp1252
+   - Solução: Substituídos por `[OK]` e `[X]`
+
+2. **AttributeError no upload** (azure_storage.py:131)
+   - Problema: `'str' object has no attribute 'name'`
+   - Causa: `arquivo_local` recebido como string mas `.name` é atributo de Path
+   - Solução: Converter para Path antes de usar `.name`
+
+#### 📚 Documentação Criada
+
+- `docs/agentes/README.md` - Visão geral dos agentes
+- `docs/agentes/engineer.md` - Documentação completa do Agente Engenheiro
+
+#### 🚀 Como Usar
+
+```bash
+# Pipeline completo
+python -m src.agents.engineer.orchestrator
+
+# Entidades específicas
+python -m src.agents.engineer.orchestrator --entities clientes produtos
+
+# Sem upload para Azure
+python -m src.agents.engineer.orchestrator --no-upload
+```
+
+```python
+# Via código Python
+from src.agents.engineer import Orchestrator
+
+orchestrator = Orchestrator()
+results = orchestrator.run_full_pipeline()
+```
+
+### 💬 Mensagem para o Próximo Claude
+
+O Agente Engenheiro de Dados está operacional e testado. Executa pipeline ETL completo:
+- **Extract**: 5 extractors (clientes, produtos, vendas, estoque, vendedores)
+- **Transform**: DataCleaner + DataMapper (opcional)
+- **Load**: Salva Parquet local + upload Azure Data Lake
+
+Próximos agentes a criar (conforme docs/agentes/README.md):
+- **Analista**: KPIs, relatórios, dashboards (sem LLM)
+- **Cientista**: ML, previsões, anomalias (sem LLM)
+- **LLM**: Chat natural, SQL, RAG (com LLM)
+
+---
+
+## 📌 SESSÃO ANTERIOR (2026-02-03) - Query V2 Cotação x Empenho 📌
+
+### 📋 Objetivo
+Investigar o pedido 1191930 e entender por que os dados de cotação não apareciam no relatório.
+
+### ✅ Problema Resolvido!
+
+#### 🔍 Descoberta: Fluxo Completo do Pedido 1191930
+
+```
+PEDIDO VENDA 1191930 (NF 5111)
+    │ Gerou
+    ▼
+SOLICITAÇÃO COMPRA 1191931 (TIPMOV='J', TOP 1804)
+    │ Gerou
+    ▼
+COTAÇÃO 2385 (NUNOTAORIG = 1191931)
+    │
+    ├─→ COMPRA 1192265 (gerada pela cotação) - SEM EMPENHO!
+    │
+    └─→ COMPRA 1193546 (diferente!) - COM EMPENHO para 1191930
+```
+
+**Causa raiz**: A cotação gerou uma compra (1192265), mas o empenho foi vinculado a OUTRA compra (1193546). Como a query original buscava cotação apenas via empenho, não encontrava a cotação.
+
+#### 🛠️ Solução: Query V2 com Dois Caminhos
+
+1. **Via Empenho** (caminho original): Empenho → Compra → Cotação
+2. **Via Solicitação** (caminho novo): Pedido Venda +1 → Solicitação → NUNOTAORIG → Cotação
+
+Quando os caminhos divergem → **"Verificar inconsistência"**
+
+#### 📊 Resultados da Query V2
+
+| Métrica | Valor |
+|---------|-------|
+| **Total de registros** | 2.145 |
+| **Com cotação** | 1.885 |
+| **INCONSISTÊNCIAS DETECTADAS** | **312** |
+| **Não empenhados** | 1.695 |
+| **Empenhados parcial** | 7 |
+| **Empenhados total** | 131 |
+
+#### 📂 Arquivos Criados
+
+**Queries:**
+- `queries/query_empenho_com_cotacao_v2.sql` - Query com detecção de inconsistência
+
+**Scripts:**
+- `scripts/investigacao/investigar_cotacao_pedido.py` - Investigação inicial
+- `scripts/investigacao/investigar_cotacao_pedido_v2.py` - Campos corretos
+- `scripts/investigacao/investigar_cotacao_pedido_v3.py` - Análise completa
+- `scripts/investigacao/testar_query_v2.py` - Teste da query V2
+- `scripts/investigacao/gerar_html_v2.py` - Gerador de relatório HTML
+
+**Relatórios:**
+- `output/json/resultado_empenho_v2.json` - Dados brutos
+- `output/html/relatorio_empenho_cotacao_v2.html` - Relatório interativo
+
+#### 🎨 Cores no Relatório V2
+
+| Cor | Status |
+|-----|--------|
+| 🟠 **Laranja** (#FFB347) | Verificar inconsistência |
+| 🔴 **Vermelho** (#F8D7DA) | Item não empenhado |
+| 🟡 **Amarelo** (#FFF3CD) | Item empenhado parcial |
+| 🟢 **Verde** (#D1E7DD) | Item empenhado total |
+| 🟢 **Verde escuro** (#CFE2D6) | Empenhado + WMS concluído |
+
+### 🎯 Próximos Passos
+
+1. [ ] Investigar as 312 inconsistências encontradas
+2. [ ] Criar alerta automático para novas inconsistências
+3. [ ] Entender por que foram criadas duas compras diferentes
+4. [ ] Atualizar relatório original para usar query V2
+
+### 💬 Mensagem para o Próximo Claude
+
+A query V2 agora detecta quando a compra da cotação é diferente da compra do empenho. Isso acontece porque:
+- A cotação gera uma compra via NUNOTACPA
+- Mas às vezes o empenho é vinculado a outra compra (criada separadamente)
+- Foram encontradas 312 inconsistências desse tipo!
+
+Para usar a nova versão:
+```bash
+python scripts/investigacao/testar_query_v2.py
+python scripts/investigacao/gerar_html_v2.py
+```
+
+---
+
+## 📌 SESSÃO ANTERIOR (2026-02-03) - DATA HUB OPERACIONAL! 📌
 
 ### 📋 Objetivo
 Transformar o projeto em um Data Hub funcional com extração completa de dados do Sankhya para o Azure Data Lake.

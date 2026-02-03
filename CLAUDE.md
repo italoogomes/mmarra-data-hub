@@ -53,6 +53,7 @@ Quando o usuário perguntar sobre:
 | Novo script de extração | `docs/scripts/README.md` |
 | Nova estrutura no Data Lake | `docs/data-lake/estrutura.md` |
 | Mudança na API Sankhya | `docs/api/sankhya.md` |
+| Novo agente criado | `docs/agentes/[nome].md` |
 | Qualquer mudança | `PROGRESSO_SESSAO.md` + `CHANGELOG.md`|
 
 #### Padrão de Documentação Data Hub:
@@ -86,8 +87,120 @@ Quando o usuário perguntar sobre:
 - ✅ Blocos de código com linguagem especificada
 - ✅ Separadores `---` entre seções
 - ✅ Estrutura Problema → Solução → Motivo para correções
-- ✅ Versão e data no cabeçalho
+- ✅ Versão e data atualizados no cabeçalho
 - ❌ NUNCA deixar mudança sem documentar
+
+---
+
+## 🤖 ARQUITETURA DOS AGENTES (CRÍTICO 🔥)
+
+### ⚠️ IMPORTANTE: Leia isto ANTES de criar qualquer agente
+
+**Agentes do Data Hub são MÓDULOS PYTHON PERMANENTES que rodam em produção.**
+
+| ❌ NÃO É | ✅ É |
+|----------|------|
+| Comando `/agent` do Claude Code | Código Python em `src/agents/` |
+| Sub-agente temporário | Módulo permanente do sistema |
+| Ferramenta de debug | Componente de produção |
+| Dependente de LLM (exceto Agente LLM) | Python puro com requests, pandas, SQLAlchemy |
+
+### 📊 Agentes Planejados
+
+| Agente | Função | Usa LLM? | Fase | Status |
+|--------|--------|----------|------|--------|
+| **Engenheiro** | ETL: extrai do Sankhya, transforma, carrega no Data Lake | ❌ Não | 1-2 | 🔄 Parcial |
+| **Analista** | Gera dashboards, KPIs, relatórios automatizados | ❌ Não | 3 | 📋 Futuro |
+| **Cientista** | Previsões de demanda, detecção de anomalias, ML | ❌ Não | 5 | 📋 Futuro |
+| **LLM** | Chat em linguagem natural, geração de SQL, RAG | ✅ Sim | 4 | 📋 Futuro |
+
+### 📁 Estrutura Obrigatória dos Agentes
+
+```
+src/agents/
+├── __init__.py
+│
+├── engineer/                  # 🔧 Agente Engenheiro de Dados
+│   ├── __init__.py
+│   ├── config.py              # Configurações específicas do agente
+│   ├── extractors/            # Extratores por entidade
+│   │   ├── __init__.py
+│   │   ├── base.py            # Classe base abstrata
+│   │   ├── vendas.py          # Extrator de vendas
+│   │   ├── compras.py         # Extrator de compras
+│   │   ├── estoque.py         # Extrator de estoque
+│   │   └── financeiro.py      # Extrator financeiro
+│   ├── transformers/          # Transformações de dados
+│   │   ├── __init__.py
+│   │   ├── cleaner.py         # Limpeza e validação
+│   │   └── mapper.py          # De-para pro star schema
+│   ├── loaders/               # Carga no destino
+│   │   ├── __init__.py
+│   │   ├── datalake.py        # Carrega no Azure Data Lake
+│   │   └── warehouse.py       # Carrega no DW (futuro)
+│   ├── orchestrator.py        # Coordena E-T-L
+│   └── scheduler.py           # Agenda execuções
+│
+├── analyst/                   # 📈 Agente Analista (futuro)
+│   ├── __init__.py
+│   ├── kpis.py                # Cálculo de indicadores
+│   ├── reports.py             # Geração de relatórios
+│   └── dashboards.py          # Dados para dashboards
+│
+├── scientist/                 # 🔬 Agente Cientista (futuro)
+│   ├── __init__.py
+│   ├── forecasting.py         # Previsão de demanda
+│   ├── anomaly.py             # Detecção de anomalias
+│   └── clustering.py          # Segmentação
+│
+└── llm/                       # 🤖 Agente LLM (futuro, COM LLM)
+    ├── __init__.py
+    ├── config.py              # API keys, modelo, etc
+    ├── chat.py                # Interface conversacional
+    ├── sql_generator.py       # Gera SQL a partir de texto
+    └── rag/                   # Retrieval Augmented Generation
+        ├── __init__.py
+        ├── embeddings.py
+        └── retriever.py
+```
+
+### 🔧 Tecnologias por Agente
+
+| Agente | Bibliotecas | Dependências Externas |
+|--------|-------------|----------------------|
+| **Engenheiro** | requests, pandas, pyarrow, sqlalchemy | API Sankhya, Azure Data Lake |
+| **Analista** | pandas, plotly, jinja2 | Data Lake/DW |
+| **Cientista** | scikit-learn, prophet, numpy | Data Lake/DW |
+| **LLM** | langchain, openai/anthropic | API de LLM (OpenAI/Azure/Anthropic) |
+
+### ❌ O que NÃO fazer ao criar agentes
+
+1. **NÃO usar LLM** nos agentes Engenheiro, Analista ou Cientista
+2. **NÃO usar frameworks** como CrewAI, AutoGen, ou LangChain (exceto no Agente LLM)
+3. **NÃO confundir** `/agent` (comando do Claude Code) com agentes do sistema
+4. **NÃO criar** agentes de "debug" ou "investigação" — isso é tarefa de desenvolvimento
+5. **NÃO importar** openai, anthropic, langchain nos agentes sem LLM
+
+### ✅ O que FAZER ao criar agentes
+
+1. **Reutilizar** código existente em `src/utils/` (sankhya_client, azure_storage)
+2. **Seguir** o padrão de extractors já existente em `src/extractors/`
+3. **Documentar** em `docs/agentes/[nome].md`
+4. **Testar** com dados reais antes de considerar pronto
+5. **Usar** logging para rastreabilidade
+6. **Tratar** erros e implementar retry quando necessário
+
+### 📝 Checklist para Criar um Agente
+
+Antes de criar qualquer agente, verificar:
+
+- [ ] Entendi que é código Python permanente (não /agent)
+- [ ] Sei qual fase do projeto esse agente pertence
+- [ ] Verifiquei se precisa ou não de LLM
+- [ ] Li a documentação existente em `docs/`
+- [ ] Vou reutilizar código de `src/utils/` e `src/extractors/`
+- [ ] Vou criar documentação em `docs/agentes/`
+- [ ] Vou atualizar `PROGRESSO_SESSAO.md` ao finalizar
 
 ---
 
@@ -106,6 +219,7 @@ Quando o usuário perguntar sobre:
 | `docs/de-para/sankhya/*.md` | Mapeamento de tabelas | Novo campo/tabela descoberto |
 | `docs/data-lake/estrutura.md` | Estrutura do Data Lake | Nova pasta/formato criado |
 | `docs/api/sankhya.md` | Endpoints da API | Novo endpoint usado |
+| `docs/agentes/*.md` | Documentação dos agentes | Novo agente criado/modificado |
 | `docs/scripts/README.md` | Scripts Python | Novo script criado |
 
 ---
@@ -158,7 +272,7 @@ Quando a conversa estiver longa, Claude deve:
 ### 📁 Estrutura de Pastas
 
 ```
-data_hub/
+mmarra-data-hub/
 ├── README.md                    # Documentação principal
 ├── CLAUDE.md                    # Este arquivo (instruções)
 ├── PROGRESSO_SESSAO.md         # Contexto da sessão
@@ -168,6 +282,11 @@ data_hub/
 ├── .gitignore
 │
 ├── docs/                       # Documentação técnica
+│   ├── agentes/               # Documentação dos agentes
+│   │   ├── README.md          # Visão geral
+│   │   ├── engineer.md        # Agente Engenheiro
+│   │   ├── analyst.md         # Agente Analista
+│   │   └── llm.md             # Agente LLM
 │   ├── api/
 │   │   └── sankhya.md         # Endpoints da API
 │   ├── data-lake/
@@ -175,28 +294,67 @@ data_hub/
 │   ├── de-para/
 │   │   └── sankhya/
 │   │       ├── compras.md     # Mapeamento Compras
-│   │       ├── vendas.md      # Mapeamento Vendas (futuro)
-│   │       ├── estoque.md     # Mapeamento Estoque (futuro)
+│   │       ├── vendas.md      # Mapeamento Vendas
+│   │       ├── estoque.md     # Mapeamento Estoque
 │   │       └── wms.md         # Mapeamento WMS
-│   └── scripts/
-│       └── README.md          # Documentação dos scripts
+│   └── pipelines/
+│       └── README.md          # Documentação dos pipelines
 │
 ├── postman/                    # Collections Postman
 │   ├── LEIA-ME.md
 │   └── *.postman_collection.json
 │
-├── src/                        # Código Python (futuro)
-│   ├── extractors/            # Scripts de extração
-│   ├── utils/                 # Funções auxiliares
-│   └── config.py              # Configurações
+├── src/                        # Código Python
+│   ├── __init__.py
+│   ├── config.py              # Configurações globais
+│   ├── main.py                # Entry point
+│   │
+│   ├── agents/                # 🤖 AGENTES DO SISTEMA
+│   │   ├── __init__.py
+│   │   ├── engineer/          # Agente Engenheiro
+│   │   ├── analyst/           # Agente Analista (futuro)
+│   │   ├── scientist/         # Agente Cientista (futuro)
+│   │   └── llm/               # Agente LLM (futuro)
+│   │
+│   ├── extractors/            # Extractors legados (migrar para agents/engineer)
+│   │   ├── __init__.py
+│   │   ├── base.py
+│   │   ├── vendas.py
+│   │   ├── compras.py
+│   │   ├── clientes.py
+│   │   └── estoque.py
+│   │
+│   ├── pipelines/             # Orquestração de pipelines
+│   │   ├── __init__.py
+│   │   └── extracao.py
+│   │
+│   ├── utils/                 # Funções auxiliares compartilhadas
+│   │   ├── __init__.py
+│   │   ├── sankhya_client.py  # Cliente da API Sankhya
+│   │   └── azure_storage.py   # Cliente do Azure Data Lake
+│   │
+│   └── data/                  # Dados locais (dev/teste)
+│       ├── raw/
+│       └── processed/
 │
-└── tests/                      # Testes (futuro)
+├── queries/                    # SQLs reutilizáveis
+│   └── *.sql
+│
+├── scripts/                    # Scripts utilitários
+│   └── investigacao/          # Scripts de investigação (dev)
+│
+├── tests/                      # Testes automatizados
+│   └── *.py
+│
+└── mcp_sankhya/               # MCP Server (integração VS Code)
+    ├── server.py
+    └── README.md
 ```
 
 ### Comandos Frequentes
 
 ```bash
-# Ativar ambiente virtual (se usar)
+# Ativar ambiente virtual
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
 venv\Scripts\activate     # Windows
@@ -205,10 +363,13 @@ venv\Scripts\activate     # Windows
 pip install -r requirements.txt
 
 # Rodar extração manual
-python src/extractors/compras.py --date 2026-01-27
+python src/main.py --extract vendas --date 2026-01-27
+
+# Rodar agente engenheiro
+python -m src.agents.engineer.orchestrator --full-load
 
 # Testar conexão com Sankhya
-python src/utils/test_connection.py
+python -c "from src.utils.sankhya_client import SankhyaClient; print(SankhyaClient().test_connection())"
 ```
 
 ### Regras de Código
@@ -297,7 +458,7 @@ Body:
 | Módulo | Tabelas | Status |
 |--------|---------|--------|
 | **Compras** | TGFCAB, TGFITE, TGFPAR, TGFPRO, TGWREC | 🔄 Mapeado |
-| **Vendas** | TGFCAB, TGFITE, TGFPAR | 📋 Futuro |
+| **Vendas** | TGFCAB, TGFITE, TGFPAR | 🔄 Mapeado |
 | **Estoque** | TGFEST, TGFSAL, TGFEND | 📋 Futuro |
 | **Financeiro** | TGFFIN, TGFREC | 📋 Futuro |
 
@@ -369,28 +530,36 @@ if response.status_code == 401:
 
 ## 🎯 Roadmap do Projeto
 
-### Fase Atual: Extração Básica - Compras
-- [x] Mapear tabelas principais (TGFCAB, TGFITE, TGFPAR, TGFPRO)
-- [x] Mapear situação WMS
-- [ ] Criar script Python de extração
-- [ ] Implementar renovação de token
-- [ ] Testar carga no Data Lake
-- [ ] Documentar campos customizados
+### Fase 1: Fundação ✅
+- [x] Estrutura do projeto
+- [x] Cliente Sankhya API (`src/utils/sankhya_client.py`)
+- [x] Cliente Azure Data Lake (`src/utils/azure_storage.py`)
+- [x] Extractors básicos (`src/extractors/`)
+- [x] MCP Server para VS Code
 
-### Fase 2: Expansão de Módulos
-- [ ] Mapear e extrair Vendas
-- [ ] Mapear e extrair Estoque
-- [ ] Mapear e extrair Financeiro
+### Fase 2: Agente Engenheiro 🔄
+- [ ] Migrar extractors para `src/agents/engineer/`
+- [ ] Implementar transformers
+- [ ] Implementar loaders
+- [ ] Criar orchestrator
+- [ ] Agendar execuções (scheduler)
 
-### Fase 3: Automação
-- [ ] Agendar extrações diárias (Azure Functions ou cron)
-- [ ] Implementar alertas de falha
-- [ ] Criar dashboard de monitoramento
+### Fase 3: Agente Analista 📋
+- [ ] Definir KPIs principais
+- [ ] Criar calculadores de KPIs
+- [ ] Gerar relatórios automáticos
+- [ ] Preparar dados para dashboards
 
-### Fase 4: Inteligência
-- [ ] Criar agentes de IA
-- [ ] Implementar chat conversacional
-- [ ] Criar dashboards analíticos
+### Fase 4: Agente LLM 📋
+- [ ] Configurar API de LLM (OpenAI/Azure/Anthropic)
+- [ ] Implementar chat básico
+- [ ] Implementar RAG com metadados do DW
+- [ ] Gerador de SQL por linguagem natural
+
+### Fase 5: Agente Cientista 📋
+- [ ] Previsão de demanda
+- [ ] Detecção de anomalias
+- [ ] Segmentação de clientes
 
 ---
 
@@ -402,5 +571,5 @@ if response.status_code == 401:
 
 ---
 
-**Última atualização:** 2026-01-30
-**Versão do projeto:** v0.1.0 (MVP - Extração de Compras)
+**Última atualização:** 2026-02-03
+**Versão do projeto:** v0.2.0 (Agentes em desenvolvimento)

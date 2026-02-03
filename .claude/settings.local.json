@@ -22,7 +22,9 @@
       "Bash(\"C:\\\\Users\\\\italo.gomes\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" extrair_para_datalake.py --extrator todos)",
       "Bash(\"C:\\\\Users\\\\italo.gomes\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" extrair_cadastros_completos.py)",
       "Bash(\"C:\\\\Users\\\\italo.gomes\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" extrair_cadastros_completos_v2.py)",
-      "Bash(\"C:\\\\Users\\\\italo.gomes\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" extrair_tudo.py)"
+      "Bash(\"C:\\\\Users\\\\italo.gomes\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" extrair_tudo.py)",
+      "Bash(start \"\" \"c:\\\\Users\\\\italo.gomes\\\\OneDrive - MMarra Distribuidora Automotiva\\\\Documentos\\\\mmarra-data-hub\\\\output\\\\estoque\\\\estoque_empresa6.csv\")",
+      "Bash(start \"\" \"c:\\\\Users\\\\italo.gomes\\\\OneDrive - MMarra Distribuidora Automotiva\\\\Documentos\\\\mmarra-data-hub\\\\output\\\\html\\\\relatorio_recebimento_canhoto.html\")"
     ]
   }
 }

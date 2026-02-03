@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recebimento de Canhotos - MMarra</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5; }
+
+        .header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .header h1 { font-size: 2em; margin-bottom: 5px; }
+        .header p { opacity: 0.9; }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 25px;
+            flex-wrap: wrap;
+        }
+        .stat-card {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            text-align: center;
+            min-width: 140px;
+        }
+        .stat-card.total { border-top: 4px solid #2c5282; }
+        .stat-card.armazenado { border-top: 4px solid #22c55e; }
+        .stat-card.conferido { border-top: 4px solid #3b82f6; }
+        .stat-card.pendente { border-top: 4px solid #f59e0b; }
+        .stat-card.sem-wms { border-top: 4px solid #ef4444; }
+        .stat-number { font-size: 2em; font-weight: bold; color: #1e3a5f; }
+        .stat-label { color: #666; font-size: 0.85em; margin-top: 5px; }
+
+        .controls {
+            padding: 20px 25px;
+            background: white;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin: 0 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .controls input, .controls select {
+            padding: 12px 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.2s;
+        }
+        .controls input { flex: 1; min-width: 200px; }
+        .controls input:focus, .controls select:focus {
+            outline: none;
+            border-color: #2c5282;
+        }
+        .controls button {
+            padding: 12px 25px;
+            background: #2c5282;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .controls button:hover { background: #1e3a5f; }
+
+        .table-container {
+            overflow-x: auto;
+            padding: 20px;
+            margin-top: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            font-size: 0.85em;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+        }
+        th {
+            background: #1e3a5f;
+            color: white;
+            padding: 14px 10px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        th:hover { background: #2c5282; }
+        td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        tr:hover { background: #f7fafc; }
+
+        /* Badges de status */
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        .status-armazenado { background: #dcfce7; color: #166534; }
+        .status-conferido { background: #dbeafe; color: #1e40af; }
+        .status-em-conferencia { background: #e0f2fe; color: #0369a1; }
+        .status-em-recebimento { background: #fef3c7; color: #92400e; }
+        .status-pendente { background: #ffedd5; color: #c2410c; }
+        .status-sem-wms { background: #fee2e2; color: #991b1b; }
+
+        .empresa-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+        .empresa-1 { background: #dbeafe; color: #1e40af; }
+        .empresa-4 { background: #dcfce7; color: #166534; }
+        .empresa-7 { background: #fef3c7; color: #92400e; }
+
+        .footer {
+            text-align: center;
+            padding: 25px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        @media print {
+            .controls { display: none; }
+            .header { padding: 15px; }
+            table { font-size: 0.75em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Recebimento de Canhotos</h1>
+        <p>Com Status WMS (Entrada / Conferencia / Armazenagem)</p>
+        <p>Gerado em: 03/02/2026 15:26</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card total">
+            <div class="stat-number">106</div>
+            <div class="stat-label">Total Canhotos</div>
+        </div>
+        <div class="stat-card armazenado">
+            <div class="stat-number">70</div>
+            <div class="stat-label">Armazenado</div>
+        </div>
+        <div class="stat-card conferido">
+            <div class="stat-number">1</div>
+            <div class="stat-label">Conferido</div>
+        </div>
+        <div class="stat-card pendente">
+            <div class="stat-number">3</div>
+            <div class="stat-label">Em Recebimento</div>
+        </div>
+        <div class="stat-card pendente">
+            <div class="stat-number">2</div>
+            <div class="stat-label">Pendente</div>
+        </div>
+        <div class="stat-card sem-wms">
+            <div class="stat-number">30</div>
+            <div class="stat-label">Sem WMS</div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <input type="text" id="search" placeholder="Buscar (nota, cliente, vendedor...)">
+        <select id="filterStatus" onchange="filterTable()">
+            <option value="">Todos Status WMS</option>
+            <option value="Armazenado">Armazenado</option>
+            <option value="Conferido">Conferido</option>
+            <option value="Em Recebimento">Em Recebimento</option>
+            <option value="Pendente">Pendente</option>
+            <option value="Sem WMS">Sem WMS</option>
+        </select>
+        <select id="filterEmpresa" onchange="filterTable()">
+            <option value="">Todas Empresas</option>
+            <option value="1">MMARRA - RIBEIRAO PRETO (SP)</option>
+            <option value="4">MMARRA - ARACATUBA (SP)</option>
+            <option value="7">MMARRA - ITUMBIARA (GO)</option>
+        </select>
+        <button onclick="exportCSV()">Exportar CSV</button>
+        <button onclick="window.print()">Imprimir</button>
+    </div>
+
+    <div class="table-container">
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th onclick="sortTable(0)">Seq</th>
+                    <th onclick="sortTable(1)">NF</th>
+                    <th onclick="sortTable(2)">Data Receb.</th>
+                    <th onclick="sortTable(3)">Empresa</th>
+                    <th onclick="sortTable(4)">Cliente</th>
+                    <th onclick="sortTable(5)">Vendedor</th>
+                    <th onclick="sortTable(6)">Valor</th>
+                    <th onclick="sortTable(7)">Status WMS</th>
+                    <th onclick="sortTable(8)">Conf. Final</th>
+                    <th onclick="sortTable(9)">Usuario</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr data-empresa="1" data-status="Sem WMS">
+                    <td>109</td>
+                    <td><strong>548044</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>CARLINHOS PECAS PCAMINHOES LTDA C01</td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 1,233.00</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Sem WMS">
+                    <td>108</td>
+                    <td><strong>548158</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>CARLINHOS PECAS PCAMINHOES LTDA C01</td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 1,036.00</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Sem WMS">
+                    <td>107</td>
+                    <td><strong>131467</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>AUTO PECAS MAURILIO LTDA C004571</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 170.00</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>106</td>
+                    <td><strong>728140</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>EATON LTDA F000595</td>
+                    <td>PAULO BOVO</td>
+                    <td style="text-align:right">R$ 82.49</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="4" data-status="Sem WMS">
+                    <td>105</td>
+                    <td><strong>117859</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-4">MMARRA - ARACATUBA (</span></td>
+                    <td>MMARRA  RIBEIRAO PRETO SP</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 481.53</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Pendente">
+                    <td>104</td>
+                    <td><strong>33877</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>COMPANHIA BRASILEIRA DE DISTRIBUICA</td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 3,263.42</td>
+                    <td><span class="status-badge status-pendente">Pendente</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>103</td>
+                    <td><strong>577843</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>DINATEC PECAS E SERVICOS LTDA C0011</td>
+                    <td>FELIPE PEREIRA</td>
+                    <td style="text-align:right">R$ 245.00</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>102</td>
+                    <td><strong>577922</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>DINATEC PECAS E SERVICOS LTDA C0011</td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 936.00</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>101</td>
+                    <td><strong>577925</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>DINATEC PECAS E SERVICOS LTDA C0011</td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 630.00</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>100</td>
+                    <td><strong>135274</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>ODAPEL DIST DE AUTO PECAS LTDA F005</td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 651.65</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Sem WMS">
+                    <td>99</td>
+                    <td><strong>465887</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>MORELATE SUDESTE DISTRIBUIDORA DE A</td>
+                    <td>FELIPE PEREIRA</td>
+                    <td style="text-align:right">R$ 331.74</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Sem WMS">
+                    <td>98</td>
+                    <td><strong>905097</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>DIBRACAM COMERCIAL LIMITADA F000822</td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 459.11</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="7" data-status="Sem WMS">
+                    <td>97</td>
+                    <td><strong>165273</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-7">MMARRA - ITUMBIARA (</span></td>
+                    <td>MMARRA  RIBEIRAO PRETO SP</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 5,346.83</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>96</td>
+                    <td><strong>905435</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>DIBRACAM COMERCIAL LIMITADA F000822</td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 2,603.07</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>95</td>
+                    <td><strong>8079</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>CIA BRASILEIRA DIST AUTO SA</td>
+                    <td>GUILHERME TRINDADE</td>
+                    <td style="text-align:right">R$ 797.49</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Sem WMS">
+                    <td>94</td>
+                    <td><strong>515879</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>ISAPA IMPORTACAO E COMERCIO LTDA F0</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 4,616.56</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Sem WMS">
+                    <td>93</td>
+                    <td><strong>515879</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>ISAPA IMPORTACAO E COMERCIO LTDA F0</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 4,616.56</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>92</td>
+                    <td><strong>210749</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>PERIM COM DE AUTO PECAS LTDA C00766</td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 9,628.44</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>91</td>
+                    <td><strong>33947</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>COMPANHIA BRASILEIRA DE DISTRIBUICA</td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 628.65</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Sem WMS">
+                    <td>90</td>
+                    <td><strong>332675</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>FABBOF INDUSTRIA METALURGICA LTDA</td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 3,272.63</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Sem WMS">
+                    <td>89</td>
+                    <td><strong>332675</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>FABBOF INDUSTRIA METALURGICA LTDA</td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 3,272.63</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Sem WMS">
+                    <td>88</td>
+                    <td><strong>343294</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>POLIPECAS DISTRIBUIDORA AUTOMOTIVA </td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 2,065.50</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>87</td>
+                    <td><strong>1268</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>COMPANHIA BRASILEIRA DE DISTRIBUICA</td>
+                    <td>FELIPE PEREIRA</td>
+                    <td style="text-align:right">R$ 1,587.94</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>86</td>
+                    <td><strong>33828</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>COMPANHIA BRASILEIRA DE DISTRIBUICA</td>
+                    <td>GUILHERME TRINDADE</td>
+                    <td style="text-align:right">R$ 1,015.52</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>85</td>
+                    <td><strong>33828</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>COMPANHIA BRASILEIRA DE DISTRIBUICA</td>
+                    <td>GUILHERME TRINDADE</td>
+                    <td style="text-align:right">R$ 1,015.52</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Sem WMS">
+                    <td>84</td>
+                    <td><strong>76364</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>INTERPUMP HYDRAULICS BRASIL  INDUST</td>
+                    <td>GUILHERME TRINDADE</td>
+                    <td style="text-align:right">R$ 9,305.57</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>83</td>
+                    <td><strong>28829</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>MTETHOMSON INDE COMLTDA</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 6,501.76</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Em Recebimento">
+                    <td>82</td>
+                    <td><strong>33924</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>COMPANHIA BRASILEIRA DE DISTRIBUICA</td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 1,768.60</td>
+                    <td><span class="status-badge status-em-recebimento">Em Recebimento</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="7" data-status="Sem WMS">
+                    <td>81</td>
+                    <td><strong>164547</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-7">MMARRA - ITUMBIARA (</span></td>
+                    <td>MMARRA UBERLANDIA MG</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 2,509.37</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Em Recebimento">
+                    <td>80</td>
+                    <td><strong>725101</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>EATON LTDA F000595</td>
+                    <td>JULIANO MARCHEZAM</td>
+                    <td style="text-align:right">R$ 10,024.12</td>
+                    <td><span class="status-badge status-em-recebimento">Em Recebimento</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>79</td>
+                    <td><strong>727295</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>EATON LTDA F000595</td>
+                    <td>PAULO BOVO</td>
+                    <td style="text-align:right">R$ 804.48</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>78</td>
+                    <td><strong>727295</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>EATON LTDA F000595</td>
+                    <td>PAULO BOVO</td>
+                    <td style="text-align:right">R$ 804.48</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>77</td>
+                    <td><strong>725381</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>EATON LTDA F000595</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 517.13</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>76</td>
+                    <td><strong>725381</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>EATON LTDA F000595</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 517.13</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>75</td>
+                    <td><strong>727144</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>EATON LTDA F000595</td>
+                    <td>JULIANO MARCHEZAM</td>
+                    <td style="text-align:right">R$ 217.16</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>74</td>
+                    <td><strong>727802</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>EATON LTDA F000595</td>
+                    <td>JULIANO MARCHEZAM</td>
+                    <td style="text-align:right">R$ 142.26</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>73</td>
+                    <td><strong>726319</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>EATON LTDA F000595</td>
+                    <td>JULIANO MARCHEZAM</td>
+                    <td style="text-align:right">R$ 198.96</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>72</td>
+                    <td><strong>726306</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>EATON LTDA F000595</td>
+                    <td>JULIANO MARCHEZAM</td>
+                    <td style="text-align:right">R$ 4,254.67</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>71</td>
+                    <td><strong>726051</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>EATON LTDA F000595</td>
+                    <td>JULIANO MARCHEZAM</td>
+                    <td style="text-align:right">R$ 31.63</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>70</td>
+                    <td><strong>726372</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>EATON LTDA F000595</td>
+                    <td>JULIANO MARCHEZAM</td>
+                    <td style="text-align:right">R$ 2,385.59</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>69</td>
+                    <td><strong>725102</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>EATON LTDA F000595</td>
+                    <td>JULIANO MARCHEZAM</td>
+                    <td style="text-align:right">R$ 438.02</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>69</td>
+                    <td><strong>725102</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>EATON LTDA F000595</td>
+                    <td>JULIANO MARCHEZAM</td>
+                    <td style="text-align:right">R$ 438.02</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>68</td>
+                    <td><strong>726055</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>EATON LTDA F000595</td>
+                    <td>JULIANO MARCHEZAM</td>
+                    <td style="text-align:right">R$ 138.41</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>67</td>
+                    <td><strong>725861</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>EATON LTDA F000595</td>
+                    <td>JULIANO MARCHEZAM</td>
+                    <td style="text-align:right">R$ 63.78</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>66</td>
+                    <td><strong>2970745</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>MAHLE METAL LEVE SA F006579</td>
+                    <td>BRUNO JERONIMO</td>
+                    <td style="text-align:right">R$ 4,848.90</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Sem WMS">
+                    <td>65</td>
+                    <td><strong>411548</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>PACAEMBU AUTO PECAS LTDA F000166</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 1,986.00</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>64</td>
+                    <td><strong>411734</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>PACAEMBU AUTO PECAS LTDA F000166</td>
+                    <td>FELIPE PEREIRA</td>
+                    <td style="text-align:right">R$ 2,245.00</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Sem WMS">
+                    <td>63</td>
+                    <td><strong>89427</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>ARCO FORJADO EXPORTACAO IMPORTACAO </td>
+                    <td></td>
+                    <td style="text-align:right">R$ nan</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>62</td>
+                    <td><strong>729615</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>EATON LTDA F000595</td>
+                    <td>JULIANO MARCHEZAM</td>
+                    <td style="text-align:right">R$ 1,355.60</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>61</td>
+                    <td><strong>729172</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>EATON LTDA F000595</td>
+                    <td>JULIANO MARCHEZAM</td>
+                    <td style="text-align:right">R$ 994.95</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>60</td>
+                    <td><strong>729857</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>EATON LTDA F000595</td>
+                    <td>JULIANO MARCHEZAM</td>
+                    <td style="text-align:right">R$ 1,140.08</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>59</td>
+                    <td><strong>975072</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>BR COMPANY IMPORTACAO E EXPORTACAO </td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 10,803.64</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>58</td>
+                    <td><strong>76936</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>CAROL LUBRIFICANTES E SERVICOS LTDA</td>
+                    <td>GUILHERME TRINDADE</td>
+                    <td style="text-align:right">R$ 679.20</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>57</td>
+                    <td><strong>467234</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>MORELATE SUDESTE DISTRIBUIDORA DE A</td>
+                    <td>FELIPE PEREIRA</td>
+                    <td style="text-align:right">R$ 264.23</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>56</td>
+                    <td><strong>25270</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>USILUX  USINAGEM DE PECAS LTDA F003</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 11,711.76</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>55</td>
+                    <td><strong>729363</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>MSAM DISTRIBUIDORA DE PECAS LTDA F0</td>
+                    <td>FELIPE PEREIRA</td>
+                    <td style="text-align:right">R$ 446.70</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>54</td>
+                    <td><strong>300090</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>CAMPINAS DIESEL LTDA EXP E IMP F000</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 4,884.25</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Sem WMS">
+                    <td>53</td>
+                    <td><strong>8027</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>CIA BRASILEIRA DIST AUTO SA</td>
+                    <td></td>
+                    <td style="text-align:right">R$ nan</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Sem WMS">
+                    <td>52</td>
+                    <td><strong>8027</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>CIA BRASILEIRA DIST AUTO SA</td>
+                    <td></td>
+                    <td style="text-align:right">R$ nan</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>51</td>
+                    <td><strong>1075808</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>UNIVERSAL AUTOMOTIVE SYSTEMS SA F00</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 1,422.49</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Sem WMS">
+                    <td>50</td>
+                    <td><strong>66433</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>AUTOLINEA AUTOPECAS LTDA F004590</td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 4,758.18</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>49</td>
+                    <td><strong>1075848</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>UNIVERSAL AUTOMOTIVE SYSTEMS SA F00</td>
+                    <td>EDUARDO PUTINATTO</td>
+                    <td style="text-align:right">R$ 4,410.93</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="4" data-status="Sem WMS">
+                    <td>48</td>
+                    <td><strong>117897</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-4">MMARRA - ARACATUBA (</span></td>
+                    <td>MMARRA  RIBEIRAO PRETO SP</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 251.08</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="4" data-status="Sem WMS">
+                    <td>47</td>
+                    <td><strong>117886</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-4">MMARRA - ARACATUBA (</span></td>
+                    <td>MMARRA  RIBEIRAO PRETO SP</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 400.95</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="4" data-status="Sem WMS">
+                    <td>46</td>
+                    <td><strong>117891</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-4">MMARRA - ARACATUBA (</span></td>
+                    <td>MMARRA  RIBEIRAO PRETO SP</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 101.18</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="4" data-status="Sem WMS">
+                    <td>45</td>
+                    <td><strong>117875</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-4">MMARRA - ARACATUBA (</span></td>
+                    <td>MMARRA  RIBEIRAO PRETO SP</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 1,790.21</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="4" data-status="Sem WMS">
+                    <td>44</td>
+                    <td><strong>117884</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-4">MMARRA - ARACATUBA (</span></td>
+                    <td>MMARRA  RIBEIRAO PRETO SP</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 580.01</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>43</td>
+                    <td><strong>471835</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>ZM SA F001445</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 19,468.08</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>42</td>
+                    <td><strong>316866</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>PATRAL PECAS LTDA F000877</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 1,999.24</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>41</td>
+                    <td><strong>23582</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>PLATO POLO EMBREAGENS LTDA ME F0062</td>
+                    <td>FELIPE PEREIRA</td>
+                    <td style="text-align:right">R$ 9,406.71</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>40</td>
+                    <td><strong>742354</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>KSPG AUTOMOTIVE BRAZIL LTDA F002557</td>
+                    <td>PAULO BOVO</td>
+                    <td style="text-align:right">R$ 596.63</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Sem WMS">
+                    <td>39</td>
+                    <td><strong>10492</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>CIA BRASILEIRA DISTRIBUICAO AUTOMOT</td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 1,123.30</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>38</td>
+                    <td><strong>12631</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>MEGA DISTRIBUIDORA LTDA</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 14,066.90</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>37</td>
+                    <td><strong>1099086</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>INTERNATIONAL IND AUTOMOTIVA DA AME</td>
+                    <td>JULIANO NOVAES</td>
+                    <td style="text-align:right">R$ 1,425.14</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Sem WMS">
+                    <td>36</td>
+                    <td><strong>33628</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>COMPANHIA BRASILEIRA DE DISTRIBUICA</td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 1,321.00</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>35</td>
+                    <td><strong>33779</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>COMPANHIA BRASILEIRA DE DISTRIBUICA</td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 356.84</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>34</td>
+                    <td><strong>33779</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>COMPANHIA BRASILEIRA DE DISTRIBUICA</td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 356.84</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>33</td>
+                    <td><strong>7885</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>CIA BRASILEIRA DIST AUTO SA</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 833.52</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Sem WMS">
+                    <td>32</td>
+                    <td><strong>1096508</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>INTERNATIONAL IND AUTOMOTIVA DA AME</td>
+                    <td>JULIANO NOVAES</td>
+                    <td style="text-align:right">R$ 1,592.72</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>31</td>
+                    <td><strong>486196</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>FW DISTRIBUIDORA LTDA</td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 526.90</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Sem WMS">
+                    <td>30</td>
+                    <td><strong>577248</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>DINATEC PECAS E SERVICOS LTDA C0011</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 1,780.00</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>29</td>
+                    <td><strong>8040</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>CIA BRASILEIRA DIST AUTO SA</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 177.43</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>28</td>
+                    <td><strong>152322</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>BRESSAN ELETRODIESEL LTDA</td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 3,290.56</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>27</td>
+                    <td><strong>152322</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>BRESSAN ELETRODIESEL LTDA</td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 3,290.56</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Sem WMS">
+                    <td>26</td>
+                    <td><strong>10392</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>CIA BRASILEIRA DISTRIBUICAO AUTOMOT</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 392.22</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>25</td>
+                    <td><strong>316520</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>PATRAL PECAS LTDA F000877</td>
+                    <td>BRUNO JERONIMO</td>
+                    <td style="text-align:right">R$ 1,563.29</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>24</td>
+                    <td><strong>10398</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>CIA BRASILEIRA DISTRIBUICAO AUTOMOT</td>
+                    <td>FELIPE PEREIRA</td>
+                    <td style="text-align:right">R$ 4,228.71</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>23</td>
+                    <td><strong>65721</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>BONFANTI TRANSP E COM DE AUTOPECAS </td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 2,586.75</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>22</td>
+                    <td><strong>11976</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>FALMA PECAS   ME</td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 773.90</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>21</td>
+                    <td><strong>728240</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>MSAM DISTRIBUIDORA DE PECAS LTDA F0</td>
+                    <td>FELIPE PEREIRA</td>
+                    <td style="text-align:right">R$ 2,060.63</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>20</td>
+                    <td><strong>904319</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>DIBRACAM COMERCIAL LIMITADA F000822</td>
+                    <td>FELIPE PEREIRA</td>
+                    <td style="text-align:right">R$ 3,294.83</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Pendente">
+                    <td>19</td>
+                    <td><strong>538737</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>COBRA ROLAMENTOS E AUTOPECAS LTDA C</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 777.12</td>
+                    <td><span class="status-badge status-pendente">Pendente</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>18</td>
+                    <td><strong>33640</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>COMPANHIA BRASILEIRA DE DISTRIBUICA</td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 685.68</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>17</td>
+                    <td><strong>972877</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>BR COMPANY IMPORTACAO E EXPORTACAO </td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 1,220.33</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>16</td>
+                    <td><strong>324415</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>QUINELATO INDUSTRIA E COMERCIO LTDA</td>
+                    <td>BRUNO JERONIMO</td>
+                    <td style="text-align:right">R$ 4,084.17</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>15</td>
+                    <td><strong>140433</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>ARCA INDUSTRIA E COMERCIO DE RETENT</td>
+                    <td>GUILHERME TRINDADE</td>
+                    <td style="text-align:right">R$ 5,798.73</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>14</td>
+                    <td><strong>3868</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>ABS METALURGICA LTDA</td>
+                    <td>GUILHERME TRINDADE</td>
+                    <td style="text-align:right">R$ 3,958.29</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>13</td>
+                    <td><strong>390842</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>RIBEIRAO DIESEL SA VEICULOS C004184</td>
+                    <td>FELIPE PEREIRA</td>
+                    <td style="text-align:right">R$ 1,959.42</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>12</td>
+                    <td><strong>33744</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>COMPANHIA BRASILEIRA DE DISTRIBUICA</td>
+                    <td>FELIPE PEREIRA</td>
+                    <td style="text-align:right">R$ 1,315.29</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>11</td>
+                    <td><strong>33744</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>COMPANHIA BRASILEIRA DE DISTRIBUICA</td>
+                    <td>FELIPE PEREIRA</td>
+                    <td style="text-align:right">R$ 1,315.29</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>10</td>
+                    <td><strong>553119</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>LNG IMPORTACAO E EXPORTACAO DE AUTO</td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 4,615.28</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>9</td>
+                    <td><strong>33826</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>COMPANHIA BRASILEIRA DE DISTRIBUICA</td>
+                    <td>FELIPE PEREIRA</td>
+                    <td style="text-align:right">R$ 1,818.04</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Conferido">
+                    <td>8</td>
+                    <td><strong>335904</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>CUMMINS  VENDAS E SERVICOS DE MOTOR</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 72,602.03</td>
+                    <td><span class="status-badge status-conferido">Conferido</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Em Recebimento">
+                    <td>7</td>
+                    <td><strong>6782</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>MDM CONEXOES E TUBOS LTDA</td>
+                    <td>EDUARDO PUTINATTO</td>
+                    <td style="text-align:right">R$ 16,051.46</td>
+                    <td><span class="status-badge status-em-recebimento">Em Recebimento</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Armazenado">
+                    <td>6</td>
+                    <td><strong>49598</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>BRAKEMATIC LTDA F003726</td>
+                    <td>NEVES</td>
+                    <td style="text-align:right">R$ 8,581.01</td>
+                    <td><span class="status-badge status-armazenado">Armazenado</span></td>
+                    <td style="text-align:center">S</td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+                <tr data-empresa="1" data-status="Sem WMS">
+                    <td>5</td>
+                    <td><strong>141652</strong></td>
+                    <td>30012026 0</td>
+                    <td><span class="empresa-badge empresa-1">MMARRA - RIBEIRAO PR</span></td>
+                    <td>COMPANHIA BRASILEIRA DE DISTRIBUICA</td>
+                    <td><SEM VENDEDOR></td>
+                    <td style="text-align:right">R$ 878.94</td>
+                    <td><span class="status-badge status-sem-wms">Sem WMS</span></td>
+                    <td style="text-align:center"></td>
+                    <td>GUILHERME.SANTOS</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+        MMarra Data Hub v0.7.0 | Recebimento de Canhotos com Status WMS | 106 registros<br>
+        Tabelas: AD_RECEBCANH + TGWREC | Gerado via API Sankhya
+    </div>
+
+    <script>
+        document.getElementById('search').addEventListener('input', filterTable);
+
+        function filterTable() {
+            const searchFilter = document.getElementById('search').value.toLowerCase();
+            const statusFilter = document.getElementById('filterStatus').value;
+            const empresaFilter = document.getElementById('filterEmpresa').value;
+            const rows = document.querySelectorAll('#dataTable tbody tr');
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                const status = row.dataset.status;
+                const empresa = row.dataset.empresa;
+
+                const matchSearch = text.includes(searchFilter);
+                const matchStatus = !statusFilter || status === statusFilter;
+                const matchEmpresa = !empresaFilter || empresa === empresaFilter;
+
+                row.style.display = (matchSearch && matchStatus && matchEmpresa) ? '' : 'none';
+            });
+        }
+
+        let sortDirection = {};
+        function sortTable(colIndex) {
+            const table = document.getElementById('dataTable');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+
+            sortDirection[colIndex] = !sortDirection[colIndex];
+            const asc = sortDirection[colIndex];
+
+            rows.sort((a, b) => {
+                let aVal = a.cells[colIndex].textContent.trim();
+                let bVal = b.cells[colIndex].textContent.trim();
+
+                const aNum = parseFloat(aVal.replace(/[R$,.]/g, ''));
+                const bNum = parseFloat(bVal.replace(/[R$,.]/g, ''));
+
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return asc ? aNum - bNum : bNum - aNum;
+                }
+
+                return asc ? aVal.localeCompare(bVal, 'pt-BR') : bVal.localeCompare(aVal, 'pt-BR');
+            });
+
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+        function exportCSV() {
+            const table = document.getElementById('dataTable');
+            const rows = table.querySelectorAll('tr');
+            let csv = [];
+
+            rows.forEach(row => {
+                if (row.style.display !== 'none') {
+                    const cols = row.querySelectorAll('th, td');
+                    const rowData = Array.from(cols).map(col => '"' + col.textContent.replace(/"/g, '""').trim() + '"');
+                    csv.push(rowData.join(','));
+                }
+            });
+
+            const blob = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'recebimento_canhotos.csv';
+            link.click();
+        }
+    </script>
+</body>
+</html>

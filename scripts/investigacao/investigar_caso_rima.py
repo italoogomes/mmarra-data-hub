@@ -10,7 +10,9 @@ import os
 import requests
 from dotenv import load_dotenv
 
-env_path = os.path.join(os.path.dirname(__file__), 'mcp_sankhya', '.env')
+# Caminho do .env na raiz do projeto
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+env_path = os.path.join(project_root, 'mcp_sankhya', '.env')
 load_dotenv(env_path)
 
 CLIENT_ID = os.getenv('SANKHYA_CLIENT_ID')
