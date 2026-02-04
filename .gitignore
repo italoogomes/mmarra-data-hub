@@ -28,3 +28,11 @@ logs/
 *.temp
 .DS_Store
 Thumbs.db
+
+# Outputs
+output/
+*.pkl
+*.parquet
+
+# Pasta de atualização (temporária)
+atualizacao/

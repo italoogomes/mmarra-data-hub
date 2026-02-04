@@ -18,359 +18,424 @@
 - Teste credenciais e tokens antes de rodar extrações
 
 ### 3. Sobre Tokens/Contexto ⚠️ CRÍTICO
-- **SEMPRE INFORME** o status dos tokens quando o usuário perguntar "como estão os tokens?"
-- **SEMPRE AVISE PROATIVAMENTE** quando atingir 60% de uso (120k de 200k tokens)
-- **SUGIRA** salvar o progresso no `PROGRESSO_SESSAO.md` quando atingir 70%
-- **DOCUMENTE TUDO** antes de atingir 80% para evitar perda de contexto
-- **NUNCA** deixe trabalho sem documentar antes de encerrar
-- **FORMATO DO AVISO**: "📊 Tokens: X/200.000 (Y%) - Z tokens restantes"
+- **SEMPRE INFORME** o status dos tokens quando o usuário perguntar
+- **SEMPRE AVISE PROATIVAMENTE** quando atingir 60% de uso
+- **SUGIRA** salvar o progresso quando atingir 70%
+- **DOCUMENTE TUDO** antes de atingir 80%
+- **FORMATO**: "📊 Tokens: X/200.000 (Y%) - Z tokens restantes"
 
 ### 4. Ao Finalizar Qualquer Tarefa
 - Atualize `PROGRESSO_SESSAO.md` com o que foi feito
 - Atualize `CHANGELOG.md` se houver mudança de versão
 - Liste os próximos passos claros
-- Informe status dos tokens ao finalizar
 
-### 5. Comandos Rápidos do Usuário
+### 5. Documentação Obrigatória
 
-| Pergunta do Usuário | Como Responder |
-|---------------------|----------------|
-| "Como estão os tokens?" | Informar: `📊 Tokens: X/200.000 (Y%) - Z tokens restantes` |
-| "Onde paramos?" | Ler e resumir `PROGRESSO_SESSAO.md` |
-| "O que falta fazer?" | Listar seção "TAREFAS PLANEJADAS" do `PROGRESSO_SESSAO.md` |
-| "Documentar tudo" | Atualizar `PROGRESSO_SESSAO.md` com resumo da sessão |
-
-### 6. Documentação Obrigatória (CRÍTICO 🔥)
-
-**Toda criação ou modificação DEVE ser documentada seguindo o padrão da pasta `docs/`.**
-
-#### Quando criar/modificar código:
 | O que mudou | Onde documentar |
 |-------------|-----------------|
 | Nova tabela mapeada | `docs/de-para/sankhya/[modulo].md` |
-| Novo script de extração | `docs/scripts/README.md` |
-| Nova estrutura no Data Lake | `docs/data-lake/estrutura.md` |
-| Mudança na API Sankhya | `docs/api/sankhya.md` |
-| Novo agente criado | `docs/agentes/[nome].md` |
-| Novo modelo de ML | `docs/modelos/[nome].md` |
-| Qualquer mudança | `PROGRESSO_SESSAO.md` + `CHANGELOG.md`|
+| Novo script | `docs/scripts/README.md` |
+| Estrutura Data Lake | `docs/data-lake/estrutura.md` |
+| Novo agente | `docs/agentes/[nome].md` |
+| Novo modelo ML | `docs/modelos/[nome].md` |
+| Qualquer mudança | `PROGRESSO_SESSAO.md` + `CHANGELOG.md` |
 
 ---
 
-## 🤖 ARQUITETURA DOS AGENTES (CRÍTICO 🔥)
+## 🤖 ARQUITETURA: AGENTES 100% AUTÔNOMOS (CRÍTICO 🔥)
 
-### ⚠️ IMPORTANTE: Leia isto ANTES de criar qualquer agente
+### Conceito Principal
 
-**Agentes do Data Hub são MÓDULOS PYTHON PERMANENTES que rodam em produção.**
+**TODOS os agentes são autônomos** — cada um tem um LLM que decide o que fazer.
+Não são scripts pré-configurados. São agentes que **pensam e decidem**.
 
-| ❌ NÃO É | ✅ É |
-|----------|------|
-| Comando `/agent` do Claude Code | Código Python em `src/agents/` |
-| Sub-agente temporário | Módulo permanente do sistema |
-| Ferramenta de debug | Componente de produção |
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    SISTEMA MULTI-AGENTE AUTÔNOMO                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│                         ┌─────────────────────┐                            │
+│                         │    ORQUESTRADOR     │                            │
+│                         │      (LLM)          │                            │
+│                         │                     │                            │
+│                         │ "Quem deve agir     │                            │
+│                         │  agora?"            │                            │
+│                         └──────────┬──────────┘                            │
+│                                    │                                        │
+│          ┌─────────────────────────┼─────────────────────────┐             │
+│          │                         │                         │             │
+│          ▼                         ▼                         ▼             │
+│  ┌───────────────┐        ┌───────────────┐        ┌───────────────┐      │
+│  │  ENGENHEIRO   │        │   ANALISTA    │        │   CIENTISTA   │      │
+│  │   AUTÔNOMO    │        │   AUTÔNOMO    │        │   AUTÔNOMO    │      │
+│  │               │        │               │        │               │      │
+│  │  🧠 LLM +     │        │  🧠 LLM +     │        │  🧠 LLM +     │      │
+│  │  Python/SQL   │        │  Python/KPIs  │        │  Python/ML    │      │
+│  │               │        │               │        │               │      │
+│  │ "Detectei     │        │ "Dados novos  │        │ "Padrão       │      │
+│  │  dados novos, │        │  chegaram,    │        │  estranho,    │      │
+│  │  vou extrair  │        │  vou analisar │        │  vou treinar  │      │
+│  │  e carregar"  │        │  e calcular"  │        │  modelo"      │      │
+│  └───────┬───────┘        └───────┬───────┘        └───────┬───────┘      │
+│          │                        │                        │               │
+│          └────────────────────────┴────────────────────────┘               │
+│                                   │                                         │
+│                                   ▼                                         │
+│                    ┌─────────────────────────────┐                         │
+│                    │      AZURE DATA LAKE        │                         │
+│                    │         (Parquet)           │                         │
+│                    └─────────────────────────────┘                         │
+│                                   ▲                                         │
+│                                   │                                         │
+│                    ┌─────────────────────────────┐                         │
+│                    │       SANKHYA ERP           │                         │
+│                    │          (API)              │                         │
+│                    └─────────────────────────────┘                         │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
-### 📊 Agentes Planejados
+### 🧠 Como Cada Agente Funciona
 
-| Agente | Função | Usa LLM? | Fase | Status |
-|--------|--------|----------|------|--------|
-| **Engenheiro** | ETL: extrai do Sankhya, transforma, carrega no Data Lake | ❌ Não | 1-2 | ✅ Concluído |
-| **Analista** | Gera dashboards, KPIs, relatórios automatizados | ❌ Não | 3 | 📋 Futuro |
-| **Cientista** | Previsões de demanda, detecção de anomalias, ML | ❌ Não | 4 | 📋 Futuro |
-| **LLM** | Chat em linguagem natural, orquestra outros agentes | ✅ Sim | 5 | 📋 Futuro |
+Cada agente tem:
+1. **LLM** — Para pensar e decidir
+2. **Tools** — Funções Python que ele pode chamar
+3. **Memória** — Contexto do que já fez
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    ANATOMIA DE UM AGENTE                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │                        LLM                               │   │
+│  │              (Cérebro do Agente)                         │   │
+│  │                                                          │   │
+│  │   "Recebi dados de vendas atualizados.                  │   │
+│  │    Vou verificar se preciso recalcular KPIs.            │   │
+│  │    Sim, a margem mudou. Vou atualizar."                 │   │
+│  └─────────────────────────┬───────────────────────────────┘   │
+│                            │                                    │
+│                            ▼                                    │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │                       TOOLS                              │   │
+│  │              (Mãos do Agente)                            │   │
+│  │                                                          │   │
+│  │   • extrair_dados()      • calcular_kpi()               │   │
+│  │   • transformar()        • detectar_anomalia()          │   │
+│  │   • carregar_datalake()  • treinar_modelo()             │   │
+│  │   • consultar_sankhya()  • gerar_relatorio()            │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## 🧠 INTEGRAÇÃO ML + LLM (CRÍTICO 🔥)
+## 📊 Os 4 Agentes do Sistema
 
-### Como os Agentes Trabalham Juntos
+### 1. 🔧 Agente Engenheiro (ETL Autônomo)
 
-O **Agente LLM** é o orquestrador que chama os outros agentes quando necessário:
+**Função:** Extrai, transforma e carrega dados automaticamente.
 
+**Comportamento Autônomo:**
+- Monitora Sankhya por mudanças
+- Decide quando extrair novos dados
+- Identifica problemas de qualidade
+- Corrige e transforma automaticamente
+- Carrega no Data Lake
+
+**Exemplo de raciocínio:**
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        FLUXO DE INTEGRAÇÃO                          │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│   Usuário: "Quanto vou vender de pastilha de freio mês que vem?"    │
-│                              │                                      │
-│                              ▼                                      │
-│                    ┌──────────────────┐                             │
-│                    │   AGENTE LLM     │                             │
-│                    │   (entende a     │                             │
-│                    │    pergunta)     │                             │
-│                    └────────┬─────────┘                             │
-│                             │                                       │
-│              "Preciso de previsão de demanda"                       │
-│                             │                                       │
-│                             ▼                                       │
-│         ┌─────────────────────────────────────┐                     │
-│         │            TOOLS (Ponte)            │                     │
-│         │  forecast_tool.py ← chama ML        │                     │
-│         └─────────────────┬───────────────────┘                     │
-│                           │                                         │
-│                           ▼                                         │
-│                ┌─────────────────────┐                              │
-│                │  AGENTE CIENTISTA   │                              │
-│                │     (Prophet)       │                              │
-│                │                     │                              │
-│                │  Retorna: 450 un.   │                              │
-│                │  Tendência: alta    │                              │
-│                └──────────┬──────────┘                              │
-│                           │                                         │
-│                           ▼                                         │
-│                    ┌──────────────────┐                             │
-│                    │   AGENTE LLM     │                             │
-│                    │   (explica o     │                             │
-│                    │    resultado)    │                             │
-│                    └────────┬─────────┘                             │
-│                             │                                       │
-│                             ▼                                       │
-│   "Baseado no histórico, a previsão é de ~450 unidades,             │
-│    com tendência de alta. Picos nas sextas-feiras."                 │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
+LLM do Engenheiro pensa:
+"Detectei que a tabela TGFCAB tem 500 registros novos desde ontem.
+ Vou extrair esses registros, validar os campos obrigatórios,
+ converter datas e carregar no Data Lake em formato Parquet."
 ```
 
-### 🔧 Tools: A Ponte entre LLM e ML
+**Tools disponíveis:**
+- `verificar_atualizacoes()` — Checa novos dados no Sankhya
+- `extrair_tabela()` — Extrai dados via API
+- `validar_dados()` — Valida qualidade
+- `transformar()` — Aplica transformações
+- `carregar_datalake()` — Salva no Azure
 
-O Agente LLM usa **tools** (funções Python) para chamar os modelos de ML:
+---
 
-| Tool | Chama | Quando usar |
-|------|-------|-------------|
-| `forecast_demand` | Agente Cientista → Prophet | "quanto vou vender", "previsão", "demanda" |
-| `detect_anomalies` | Agente Cientista → Isolation Forest | "algo estranho", "anomalia", "fora do normal" |
-| `segment_customers` | Agente Cientista → K-Means | "clientes parecidos", "segmentação", "perfil" |
-| `get_kpis` | Agente Analista | "KPIs", "indicadores", "métricas" |
-| `run_query` | Data Lake / Sankhya | consultas diretas de dados |
+### 2. 📈 Agente Analista (KPIs Autônomo)
 
-### 📁 Estrutura de Pastas com Integração
+**Função:** Analisa dados e calcula métricas automaticamente.
+
+**Comportamento Autônomo:**
+- Detecta quando dados novos chegam
+- Decide quais KPIs recalcular
+- Identifica mudanças significativas
+- Gera alertas e relatórios
+
+**Exemplo de raciocínio:**
+```
+LLM do Analista pensa:
+"Dados de vendas de janeiro chegaram. Vou calcular:
+ - Faturamento total
+ - Margem média
+ - Top 10 produtos
+ - Comparativo com dezembro
+ A margem caiu 5%, vou gerar um alerta."
+```
+
+**Tools disponíveis:**
+- `detectar_dados_novos()` — Monitora Data Lake
+- `calcular_kpi()` — Calcula métricas
+- `comparar_periodos()` — Análise temporal
+- `gerar_alerta()` — Notificações
+- `criar_relatorio()` — Relatórios automáticos
+
+---
+
+### 3. 🔬 Agente Cientista (ML Autônomo)
+
+**Função:** Aplica machine learning automaticamente.
+
+**Comportamento Autônomo:**
+- Detecta padrões e anomalias
+- Decide quando treinar modelos
+- Escolhe algoritmos adequados
+- Gera previsões automaticamente
+
+**Exemplo de raciocínio:**
+```
+LLM do Cientista pensa:
+"Tenho 2 anos de dados de vendas do produto 1001.
+ Vou treinar um modelo Prophet para previsão.
+ Detectei sazonalidade semanal e anual.
+ Previsão para março: 450 unidades, tendência alta."
+```
+
+**Tools disponíveis:**
+- `analisar_padrao()` — Identifica padrões nos dados
+- `detectar_anomalia()` — Isolation Forest
+- `treinar_modelo()` — Prophet, sklearn
+- `fazer_previsao()` — Previsões
+- `segmentar()` — Clustering K-Means
+
+---
+
+### 4. 🎯 Orquestrador (Coordenador)
+
+**Função:** Coordena os outros agentes e responde usuários.
+
+**Comportamento Autônomo:**
+- Recebe perguntas dos usuários
+- Decide qual agente acionar
+- Combina resultados de múltiplos agentes
+- Formata respostas em linguagem natural
+
+**Exemplo de raciocínio:**
+```
+Usuário: "Qual estoque mínimo do produto 1001?"
+
+Orquestrador pensa:
+"Para responder, preciso:
+ 1. Pedir ao Cientista a previsão de demanda
+ 2. Pedir ao Engenheiro o lead time do fornecedor
+ 3. Calcular: (demanda × lead_time) + segurança
+ 4. Formatar resposta"
+```
+
+**Tools disponíveis:**
+- `acionar_engenheiro()` — Delega para Engenheiro
+- `acionar_analista()` — Delega para Analista
+- `acionar_cientista()` — Delega para Cientista
+- `combinar_resultados()` — Junta informações
+- `responder_usuario()` — Formata resposta
+
+---
+
+## 🔄 Fluxo de Comunicação Entre Agentes
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│  CENÁRIO: Usuário pergunta "Quais produtos vão faltar semana que vem?"     │
+│                                                                             │
+│  ┌─────────────┐                                                           │
+│  │  USUÁRIO    │                                                           │
+│  └──────┬──────┘                                                           │
+│         │ "Quais produtos vão faltar?"                                     │
+│         ▼                                                                   │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                        ORQUESTRADOR                                  │   │
+│  │                                                                      │   │
+│  │  Pensa: "Preciso de previsão + estoque atual. Vou acionar           │   │
+│  │          Cientista e Engenheiro."                                   │   │
+│  └──────────────────────────┬──────────────────────────────────────────┘   │
+│                             │                                               │
+│            ┌────────────────┴────────────────┐                             │
+│            ▼                                 ▼                              │
+│  ┌──────────────────┐              ┌──────────────────┐                    │
+│  │    CIENTISTA     │              │    ENGENHEIRO    │                    │
+│  │                  │              │                  │                    │
+│  │ "Vou prever      │              │ "Vou buscar      │                    │
+│  │  demanda de      │              │  estoque atual   │                    │
+│  │  cada produto"   │              │  no Sankhya"     │                    │
+│  │                  │              │                  │                    │
+│  │ Retorna:         │              │ Retorna:         │                    │
+│  │ {1001: 150/sem}  │              │ {1001: 50 un}    │                    │
+│  │ {1002: 80/sem}   │              │ {1002: 100 un}   │                    │
+│  └────────┬─────────┘              └────────┬─────────┘                    │
+│           │                                 │                               │
+│           └─────────────┬───────────────────┘                              │
+│                         ▼                                                   │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                        ORQUESTRADOR                                  │   │
+│  │                                                                      │   │
+│  │  Combina: "Produto 1001 precisa 150, tem 50 → VAI FALTAR           │   │
+│  │           Produto 1002 precisa 80, tem 100 → OK"                    │   │
+│  └──────────────────────────┬──────────────────────────────────────────┘   │
+│                             │                                               │
+│                             ▼                                               │
+│  ┌─────────────┐                                                           │
+│  │  USUÁRIO    │ ◄── "O produto 1001 (Pastilha Freio) vai faltar.        │
+│  └─────────────┘      Estoque: 50 un. Demanda prevista: 150 un.          │
+│                        Recomendo comprar 100+ unidades urgente."          │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📁 Estrutura de Pastas
 
 ```
 src/agents/
 ├── __init__.py
+├── base.py                    # Classe base para todos os agentes
+├── config.py                  # Configurações compartilhadas
 │
-├── engineer/                  # 🔧 Agente Engenheiro de Dados
+├── orchestrator/              # 🎯 Orquestrador
 │   ├── __init__.py
-│   ├── config.py
-│   ├── extractors/
-│   ├── transformers/
-│   ├── loaders/
-│   ├── orchestrator.py
-│   └── scheduler.py
+│   ├── agent.py               # Agente principal
+│   ├── prompts.py             # Prompts do orquestrador
+│   └── tools.py               # Tools de coordenação
 │
-├── analyst/                   # 📈 Agente Analista
+├── engineer/                  # 🔧 Engenheiro Autônomo
 │   ├── __init__.py
-│   ├── config.py
-│   ├── kpis/
-│   ├── reports/
-│   └── dashboards/
-│
-├── scientist/                 # 🔬 Agente Cientista (ML - SEM LLM)
-│   ├── __init__.py
-│   ├── config.py
-│   ├── forecasting/           # Previsão de demanda
+│   ├── agent.py               # Agente com LLM
+│   ├── prompts.py             # Prompts específicos
+│   ├── tools/                 # Tools de ETL
 │   │   ├── __init__.py
-│   │   ├── demand_model.py    # Prophet
-│   │   ├── preprocessor.py
-│   │   └── predictor.py
-│   ├── anomaly/               # Detecção de anomalias
+│   │   ├── extract.py
+│   │   ├── transform.py
+│   │   └── load.py
+│   └── monitors/              # Monitoramento de dados
+│       └── sankhya_monitor.py
+│
+├── analyst/                   # 📈 Analista Autônomo
+│   ├── __init__.py
+│   ├── agent.py               # Agente com LLM
+│   ├── prompts.py             # Prompts específicos
+│   ├── tools/                 # Tools de análise
 │   │   ├── __init__.py
-│   │   ├── detector.py        # Isolation Forest
+│   │   ├── kpis.py
+│   │   ├── reports.py
 │   │   └── alerts.py
-│   ├── clustering/            # Segmentação
-│   │   ├── __init__.py
-│   │   ├── customers.py       # K-Means
-│   │   └── products.py
-│   ├── models/                # Modelos treinados (.pkl)
-│   │   ├── demand/
-│   │   ├── anomaly/
-│   │   └── clustering/
-│   └── utils/
-│       ├── holidays.py        # Feriados brasileiros
-│       └── metrics.py         # MAPE, MAE, etc
+│   └── monitors/              # Monitoramento de KPIs
+│       └── datalake_monitor.py
 │
-└── llm/                       # 🤖 Agente LLM (COM LLM - Orquestrador)
-    ├── __init__.py
-    ├── config.py              # API keys, modelo, temperatura
-    ├── chat.py                # Interface de chat principal
-    ├── tools/                 # 🆕 FERRAMENTAS QUE CHAMAM OUTROS AGENTES
-    │   ├── __init__.py
-    │   ├── forecast_tool.py   # Chama scientist/forecasting
-    │   ├── anomaly_tool.py    # Chama scientist/anomaly
-    │   ├── cluster_tool.py    # Chama scientist/clustering
-    │   ├── kpi_tool.py        # Chama analyst/kpis
-    │   └── query_tool.py      # Consultas diretas
-    ├── prompts/               # Templates de prompt
-    │   ├── system.py          # Prompt de sistema
-    │   └── templates/
-    └── rag/                   # Retrieval Augmented Generation
-        ├── __init__.py
-        ├── embeddings.py
-        └── retriever.py
-```
-
-### 🔧 Tecnologias por Agente
-
-| Agente | Bibliotecas | Dependências Externas |
-|--------|-------------|----------------------|
-| **Engenheiro** | requests, pandas, pyarrow, sqlalchemy | API Sankhya, Azure Data Lake |
-| **Analista** | pandas, plotly, jinja2 | Data Lake/DW |
-| **Cientista** | prophet, scikit-learn, numpy, pandas | Data Lake/DW |
-| **LLM** | langchain, openai/anthropic | API de LLM + **chama os outros agentes** |
-
-### ❌ O que NÃO fazer
-
-1. **NÃO colocar LLM** nos agentes Engenheiro, Analista ou Cientista
-2. **NÃO fazer** o Cientista responder em linguagem natural (quem faz isso é o LLM)
-3. **NÃO duplicar** lógica — ML fica no Cientista, explicação fica no LLM
-4. **NÃO chamar** Prophet direto do LLM — sempre passar pela tool
-
-### ✅ O que FAZER
-
-1. **Cientista retorna dados estruturados** (dict/JSON), não texto
-2. **LLM interpreta e explica** os dados pro usuário
-3. **Tools são a ponte** — funções simples que conectam LLM aos outros agentes
-4. **Cada agente faz UMA coisa bem** — separação de responsabilidades
-
-### 📝 Exemplo de Tool
-
-```python
-# src/agents/llm/tools/forecast_tool.py
-
-def forecast_demand(codprod: int, periods: int = 30) -> dict:
-    """
-    Tool que o LLM chama para obter previsão de demanda.
-    
-    Args:
-        codprod: Código do produto
-        periods: Dias para prever
-        
-    Returns:
-        Dict com previsão formatada para o LLM interpretar
-    """
-    from ...scientist.forecasting.demand_model import DemandForecastModel
-    
-    model = DemandForecastModel()
-    return model.get_forecast_summary(codprod, periods)
-
-# Definição para LangChain/OpenAI Functions
-FORECAST_TOOL = {
-    'name': 'forecast_demand',
-    'description': 'Faz previsão de demanda. Use quando perguntarem sobre vendas futuras.',
-    'parameters': {
-        'type': 'object',
-        'properties': {
-            'codprod': {'type': 'integer', 'description': 'Código do produto'},
-            'periods': {'type': 'integer', 'description': 'Dias para prever', 'default': 30}
-        },
-        'required': ['codprod']
-    }
-}
-```
-
----
-
-## 📁 Estrutura Completa do Projeto
-
-```
-mmarra-data-hub/
-├── README.md
-├── CLAUDE.md                    # Este arquivo
-├── PROGRESSO_SESSAO.md
-├── CHANGELOG.md
-├── .env
-├── .env.example
-├── .gitignore
-│
-├── docs/                        # Documentacao tecnica
-│   ├── agentes/                 # Documentacao dos agentes
-│   │   ├── README.md
-│   │   ├── engineer.md
-│   │   ├── analyst.md
-│   │   ├── scientist.md
-│   │   └── llm.md
-│   ├── data-lake/               # Estrutura do Data Lake
-│   ├── de-para/                 # Mapeamentos de tabelas
-│   │   ├── sankhya/             # Mapeamentos Sankhya
-│   │   ├── ANALISE_ESTRUTURA.md
-│   │   ├── PLANO_MAPEAMENTO.md
-│   │   └── schema-banco-sankhya.md
-│   ├── guias/                   # Guias de uso
-│   │   ├── GUIA_NGROK.md
-│   │   └── GUIA_RAPIDO_MCP.md
-│   ├── pipelines/               # Documentacao de pipelines
-│   ├── relatorios/              # Documentacao de relatorios
-│   │   └── README_RELATORIO.md
-│   ├── tabelas/                 # Templates de tabelas
-│   │   └── TEMPLATE.md
-│   └── wms/                     # Documentacao WMS
-│       ├── CHECKLIST_EXPLORACAO_WMS.md
-│       └── CURLS_EXPLORACAO_WMS.md
-│
-├── src/
+├── scientist/                 # 🔬 Cientista Autônomo
 │   ├── __init__.py
-│   ├── config.py
-│   ├── main.py
-│   ├── agents/                  # Agentes do sistema
-│   ├── extractors/              # Legado (migrar para agents/engineer)
-│   ├── pipelines/
-│   ├── utils/
-│   └── data/
+│   ├── agent.py               # Agente com LLM
+│   ├── prompts.py             # Prompts específicos
+│   ├── tools/                 # Tools de ML
+│   │   ├── __init__.py
+│   │   ├── forecasting.py     # Prophet
+│   │   ├── anomaly.py         # Isolation Forest
+│   │   └── clustering.py      # K-Means
+│   ├── models/                # Modelos treinados
+│   │   ├── demand/
+│   │   └── anomaly/
+│   └── utils/
+│       ├── holidays.py
+│       └── metrics.py
 │
-├── queries/                     # SQLs reutilizaveis
-│
-├── scripts/                     # Scripts utilitarios
-│   ├── extracao/                # Scripts de extracao de dados
-│   ├── investigacao/            # Scripts de investigacao
-│   ├── manutencao/              # Scripts de manutencao
-│   ├── sql/                     # Scripts SQL especificos
-│   └── testes/                  # Scripts de teste
-│
-├── tests/                       # Testes automatizados
-└── mcp_sankhya/                 # MCP Server
+└── shared/                    # Compartilhado entre agentes
+    ├── __init__.py
+    ├── memory.py              # Memória compartilhada
+    ├── communication.py       # Comunicação entre agentes
+    └── tools/
+        ├── sankhya.py         # Acesso ao Sankhya
+        └── datalake.py        # Acesso ao Data Lake
 ```
 
 ---
 
-## 🎯 Roadmap do Projeto
+## 🔧 Tecnologias
+
+| Componente | Tecnologia |
+|------------|------------|
+| **LLM** | OpenAI GPT-4 ou Anthropic Claude (via LangChain) |
+| **Framework Agentes** | LangChain Agents ou LangGraph |
+| **ETL** | pandas, requests, pyarrow |
+| **ML** | Prophet, scikit-learn, numpy |
+| **Armazenamento** | Azure Data Lake Gen2 (Parquet) |
+| **Fonte** | Sankhya API |
+
+---
+
+## ❌ O que NÃO fazer
+
+1. **NÃO criar scripts pré-configurados** — Agentes decidem sozinhos
+2. **NÃO hardcodar extrações** — Engenheiro detecta e decide
+3. **NÃO listar KPIs fixos** — Analista identifica o que calcular
+4. **NÃO treinar modelos manualmente** — Cientista decide quando treinar
+
+---
+
+## ✅ O que FAZER
+
+1. **Cada agente tem LLM** — Todos pensam e decidem
+2. **Tools são genéricas** — Agente escolhe qual usar
+3. **Comunicação via Orquestrador** — Coordena os outros
+4. **Monitoramento contínuo** — Agentes observam mudanças
+5. **Documentar prompts** — Prompts definem personalidade do agente
+
+---
+
+## 🎯 Roadmap
 
 ### Fase 1: Fundação ✅
 - [x] Estrutura do projeto
 - [x] Cliente Sankhya API
 - [x] Cliente Azure Data Lake
-- [x] Extractors básicos
 - [x] MCP Server
 
-### Fase 2: Agente Engenheiro ✅
-- [x] Migrar extractors para `src/agents/engineer/`
-- [x] Implementar transformers
-- [x] Implementar loaders
-- [x] Criar orchestrator
-- [x] Agendar execuções
+### Fase 2: Agente Engenheiro Autônomo 🔄
+- [ ] Criar classe base do agente
+- [ ] Implementar LLM + Tools
+- [ ] Criar monitor de Sankhya
+- [ ] Testar extração autônoma
 
-### Fase 3: Agente Analista 📋
-- [ ] Definir KPIs principais
-- [ ] Criar calculadores de KPIs
-- [ ] Gerar relatórios automáticos
+### Fase 3: Agente Analista Autônomo 📋
+- [ ] Implementar LLM + Tools
+- [ ] Criar monitor de Data Lake
+- [ ] Implementar cálculo de KPIs
+- [ ] Testar análise autônoma
 
-### Fase 4: Agente Cientista (ML) 📋
-- [ ] Implementar previsão de demanda (Prophet)
-- [ ] Implementar detecção de anomalias
-- [ ] Implementar segmentação de clientes
-- [ ] Criar pipeline de retreino
+### Fase 4: Agente Cientista Autônomo 📋
+- [ ] Implementar LLM + Tools
+- [ ] Criar detecção de padrões
+- [ ] Implementar Prophet/sklearn
+- [ ] Testar previsões autônomas
 
-### Fase 5: Agente LLM (Orquestrador) 📋
-- [ ] Configurar API de LLM
-- [ ] Criar tools que chamam Cientista
-- [ ] Criar tools que chamam Analista
-- [ ] Implementar chat
-- [ ] Implementar RAG
+### Fase 5: Orquestrador 📋
+- [ ] Implementar coordenação
+- [ ] Criar comunicação entre agentes
+- [ ] Implementar interface de chat
+- [ ] Testar sistema completo
 
 ---
 
-## 🔐 Segurança e Credenciais
-
-### Variáveis de Ambiente (.env)
+## 🔐 Variáveis de Ambiente (.env)
 
 ```bash
 # Sankhya
@@ -383,62 +448,21 @@ AZURE_STORAGE_ACCOUNT=sua_conta
 AZURE_STORAGE_KEY=sua_chave
 AZURE_CONTAINER=datahub
 
-# LLM (Fase 5)
-LLM_PROVIDER=openai  # ou anthropic, azure
+# LLM (todos os agentes usam)
+LLM_PROVIDER=openai  # ou anthropic
 LLM_API_KEY=sua_chave
-LLM_MODEL=gpt-4  # ou claude-3-opus
-```
-
-**IMPORTANTE:**
-- ❌ NUNCA commitar credenciais
-- ✅ Usar `.env` para variáveis sensíveis
-- ✅ Documentar em `.env.example`
-
----
-
-## 💡 Boas Práticas
-
-### Para ML
-1. **Retreinar** modelos periodicamente (semanal/mensal)
-2. **Monitorar** métricas (MAPE, MAE) em produção
-3. **Versionar** modelos treinados
-4. **Logar** previsões vs realidade para avaliar performance
-
-### Para LLM
-1. **Tools simples** — cada tool faz uma coisa
-2. **Retornar dados estruturados** — LLM formata pro usuário
-3. **Tratar erros** — tool deve retornar erro amigável
-4. **Cachear** quando possível — LLM é caro
-
----
-
-## 🎯 Fluxo de Trabalho
-
-```
-1. Ler PROGRESSO_SESSAO.md
-   ↓
-2. Ler docs/ relevantes
-   ↓
-3. Fazer tarefa (um passo por vez)
-   ↓
-4. Testar com dados reais
-   ↓
-5. DOCUMENTAR
-   ↓
-6. Atualizar PROGRESSO_SESSAO.md
-   ↓
-7. Sugerir próximos passos
+LLM_MODEL=gpt-4      # ou claude-3-opus
 ```
 
 ---
 
 ## 📞 Contato
 
-**Projeto**: MMarra Data Hub
-**Responsável**: Ítalo Gomes
-**Objetivo**: Integrar Sankhya ERP com Data Lake Azure + IA para análises inteligentes
+**Projeto:** MMarra Data Hub
+**Responsável:** Ítalo Gomes
+**Arquitetura:** Agentes 100% Autônomos
 
 ---
 
 **Última atualização:** 2026-02-04
-**Versão do projeto:** v0.3.0 (Agente Engenheiro concluído)
+**Versão:** v0.4.0 (Agentes Autônomos)
