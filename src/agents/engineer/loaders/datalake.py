@@ -17,7 +17,13 @@ from pathlib import Path
 import pandas as pd
 
 from src.config import RAW_DATA_DIR, PROCESSED_DATA_DIR
-from src.utils.azure_storage import AzureDataLakeClient
+from src.utils import _AZURE_AVAILABLE
+
+# Importar Azure apenas se disponivel
+if _AZURE_AVAILABLE:
+    from src.utils.azure_storage import AzureDataLakeClient
+else:
+    AzureDataLakeClient = None
 
 logger = logging.getLogger(__name__)
 
@@ -57,13 +63,21 @@ class DataLakeLoader:
         Args:
             upload_to_cloud: Se True, faz upload para Azure após salvar local
         """
+        # Desabilitar upload se Azure nao estiver disponivel
+        if upload_to_cloud and not _AZURE_AVAILABLE:
+            logger.warning("Azure SDK nao instalado. Upload desabilitado.")
+            upload_to_cloud = False
+
         self.upload_to_cloud = upload_to_cloud
-        self._azure_client: Optional[AzureDataLakeClient] = None
+        self._azure_client = None
         self.stats = {}
 
     @property
-    def azure_client(self) -> AzureDataLakeClient:
+    def azure_client(self):
         """Retorna cliente Azure, criando se necessário."""
+        if not _AZURE_AVAILABLE:
+            return None
+
         if self._azure_client is None:
             self._azure_client = AzureDataLakeClient()
         return self._azure_client

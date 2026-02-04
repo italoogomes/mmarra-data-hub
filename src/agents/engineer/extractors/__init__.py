@@ -11,6 +11,7 @@ from .vendas import VendasExtractor
 from .produtos import ProdutosExtractor
 from .estoque import EstoqueExtractor
 from .vendedores import VendedoresExtractor
+from .compras import ComprasExtractor, PedidosCompraExtractor
 
 __all__ = [
     'BaseExtractor',
@@ -18,5 +19,7 @@ __all__ = [
     'VendasExtractor',
     'ProdutosExtractor',
     'EstoqueExtractor',
-    'VendedoresExtractor'
+    'VendedoresExtractor',
+    'ComprasExtractor',
+    'PedidosCompraExtractor',
 ]

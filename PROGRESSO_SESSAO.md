@@ -1,12 +1,166 @@
 # 📊 Progresso da Sessão - MMarra Data Hub
 
 **Data:** 2026-02-04
-**Última Atualização:** 2026-02-04 - Correções e Relatório Interativo
-**Versão Atual:** v1.6.0 - Relatório Pendências Compra Interativo + Correção Datas Sankhya
+**Última Atualização:** 2026-02-04 - Agentes Autônomos Implementados
+**Versão Atual:** v1.7.0 - Interfaces Simplificadas (Engenheiro + Analista)
 
 ---
 
-## 🔥 SESSÃO ATUAL (2026-02-04 - Parte 2) - CORREÇÕES E RELATÓRIOS 🔥
+## 🔥 SESSÃO ATUAL (2026-02-04 - Parte 3) - AGENTES AUTÔNOMOS 🔥
+
+### 📋 Objetivo
+Tornar os agentes Engenheiro e Analista mais autônomos, permitindo chamadas de uma linha com boas práticas automáticas.
+
+### ✅ O que foi feito nesta sessão
+
+#### 1. Interface Simplificada do Engenheiro (Facade Pattern)
+
+**Arquivo:** `src/agents/engineer/facade.py` (469 linhas)
+
+**Antes:**
+```python
+extractor = VendasExtractor()
+data = extractor.extract(data_inicio="2024-01-01", ...)
+cleaner = DataCleaner()
+clean_data = cleaner.clean(data)
+loader = DataLakeLoader()
+loader.load(clean_data)
+```
+
+**Depois:**
+```python
+from src.agents.engineer import Engenheiro
+
+engenheiro = Engenheiro()
+result = engenheiro.extrair("vendas", periodo="90d")
+# Boas práticas aplicadas automaticamente!
+```
+
+**Boas práticas automáticas:**
+- Deduplicação por chave primária
+- Validação de tipos de dados
+- Tratamento de datas Sankhya (formato DDMMYYYY)
+- Compressão Parquet otimizada
+- Metadados de rastreamento (_extracted_at, _entity)
+- Detecção inteligente: incremental vs completo
+
+**Entidades disponíveis:** vendas, clientes, produtos, estoque, vendedores, compras, pedidos_compra
+
+#### 2. Interface Simplificada do Analista (Facade + Receitas)
+
+**Arquivo:** `src/agents/analyst/facade.py` (618 linhas)
+
+**Antes:**
+```python
+loader = AnalystDataLoader()
+df = loader.load("vendas", data_inicio="2026-01-01")
+kpi = VendasKPI()
+resultado = kpi.calculate_all(df)
+gen = ReportGenerator()
+html = gen.generate({"vendas": resultado})
+```
+
+**Depois:**
+```python
+from src.agents.analyst import Analista
+
+analista = Analista()
+result = analista.relatorio("vendas", cliente="CLIENTE X")
+result.abrir()  # Abre no navegador
+```
+
+**Sistema de Receitas (Templates Inteligentes):**
+| Receita | Módulo | KPIs | Período Padrão |
+|---------|--------|------|----------------|
+| `vendas` | vendas | 9 KPIs | 30d |
+| `vendas_diario` | vendas | 4 KPIs | 1d |
+| `vendas_semanal` | vendas | 6 KPIs | 7d |
+| `vendas_mensal` | vendas | 4 KPIs | 6m |
+| `compras` | compras | 5 KPIs | 30d |
+| `compras_pendentes` | compras | 2 KPIs | 90d |
+| `estoque` | estoque | 6 KPIs | - |
+| `estoque_critico` | estoque | 2 KPIs | - |
+
+#### 3. ComprasExtractor Criado
+
+**Arquivo:** `src/agents/engineer/extractors/compras.py`
+
+Suporta dois tipos de movimento:
+- `TIPMOV = 'C'`: Compras (notas fiscais de entrada)
+- `TIPMOV = 'O'`: Pedidos de compra
+
+#### 4. Testes com Dados Reais
+
+**Relatório de Vendas gerado:**
+- Faturamento Total: R$ 3.285.280,47
+- Ticket Médio: R$ 1.430,87
+- Quantidade de Pedidos: 2.296
+- Arquivo: `output/reports/vendas_20260204_185812.html`
+
+**Segmentação de Clientes (RFM):**
+| Segmento | Clientes | % Clientes | Receita | % Receita |
+|----------|----------|------------|---------|-----------|
+| **VIP** | 7 | 0.9% | R$ 7.581.270 | **48.0%** |
+| Regular | 47 | 5.8% | R$ 2.381.091 | 15.1% |
+| Esporádico | 406 | 50.1% | R$ 4.096.824 | 25.9% |
+| Inativo | 351 | 43.3% | R$ 1.738.326 | 11.0% |
+
+**Insight:** 7 clientes VIP (menos de 1%) geram quase metade da receita!
+
+#### 5. Prophet Instalado
+
+- Prophet instalado com sucesso
+- Previsão de demanda precisa de 30+ dias de histórico
+- Dados atuais têm apenas 8 dias (precisa extrair mais histórico)
+
+### 📁 Arquivos Criados/Modificados
+
+| Arquivo | Ação | Descrição |
+|---------|------|-----------|
+| `src/agents/engineer/facade.py` | Criado | Classe Engenheiro (interface simplificada) |
+| `src/agents/analyst/facade.py` | Criado | Classe Analista + receitas de relatórios |
+| `src/agents/engineer/extractors/compras.py` | Criado | ComprasExtractor + PedidosCompraExtractor |
+| `src/agents/engineer/__init__.py` | Modificado | Exportar Engenheiro, ExtractionResult |
+| `src/agents/analyst/__init__.py` | Modificado | Exportar Analista, ReportResult, RECIPES |
+| `src/agents/engineer/config.py` | Modificado | Configs para compras |
+| `src/utils/__init__.py` | Modificado | Azure opcional |
+| `src/agents/engineer/loaders/datalake.py` | Modificado | Azure opcional |
+| `scripts/testes/testar_engenheiro.py` | Criado | Script de teste do Engenheiro |
+| `scripts/testes/testar_analista.py` | Criado | Script de teste do Analista |
+
+### 🎯 Próximos Passos
+
+1. [ ] Extrair mais histórico de vendas (90 dias) para previsão de demanda
+2. [ ] Criar relatório de segmentação de clientes
+3. [ ] Implementar Agente LLM (orquestrador com tools)
+4. [ ] Integrar relatórios ao Agente Analista
+
+### 💬 Mensagem para o Próximo Claude
+
+> **Contexto:** Interfaces simplificadas implementadas para Engenheiro e Analista.
+>
+> **Uso do Engenheiro:**
+> ```python
+> from src.agents.engineer import Engenheiro
+> eng = Engenheiro()
+> result = eng.extrair("vendas", periodo="90d")
+> ```
+>
+> **Uso do Analista:**
+> ```python
+> from src.agents.analyst import Analista
+> ana = Analista()
+> result = ana.relatorio("vendas", cliente="CLIENTE X")
+> result.abrir()
+> ```
+>
+> **Nota:** Azure SDK não está instalado (apenas salva localmente).
+>
+> **Prophet:** Instalado, mas precisa de 30+ dias de histórico para previsões.
+
+---
+
+## 🔥 SESSÃO ANTERIOR (2026-02-04 - Parte 2) - CORREÇÕES E RELATÓRIOS 🔥
 
 ### 📋 Objetivo
 1. Corrigir problema de conversão de datas do Sankhya (100% NaT)

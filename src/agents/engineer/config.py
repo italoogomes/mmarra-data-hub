@@ -73,6 +73,16 @@ SCHEDULE_CONFIG = {
         "frequency": "daily",
         "hour": 6,
         "minute": 30
+    },
+    "compras": {
+        "frequency": "daily",
+        "hour": 6,
+        "minute": 45
+    },
+    "pedidos_compra": {
+        "frequency": "daily",
+        "hour": 7,
+        "minute": 0
     }
 }
 
@@ -81,5 +91,7 @@ ENTITY_LIMITS = {
     "clientes": {"id_column": "p.CODPARC", "id_max": 100000},
     "produtos": {"id_column": "p.CODPROD", "id_max": 600000},
     "estoque": {"id_column": "e.CODPROD", "id_max": 600000},
-    "vendas": {"id_column": "c.NUNOTA", "id_max": 500000}
+    "vendas": {"id_column": "c.NUNOTA", "id_max": 500000},
+    "compras": {"id_column": "c.NUNOTA", "id_max": 500000},
+    "pedidos_compra": {"id_column": "c.NUNOTA", "id_max": 500000}
 }

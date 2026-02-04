@@ -26,7 +26,8 @@
       "Bash(start \"\" \"c:\\\\Users\\\\italo.gomes\\\\OneDrive - MMarra Distribuidora Automotiva\\\\Documentos\\\\mmarra-data-hub\\\\output\\\\estoque\\\\estoque_empresa6.csv\")",
       "Bash(start \"\" \"c:\\\\Users\\\\italo.gomes\\\\OneDrive - MMarra Distribuidora Automotiva\\\\Documentos\\\\mmarra-data-hub\\\\output\\\\html\\\\relatorio_recebimento_canhoto.html\")",
       "Bash(dir:*)",
-      "Bash(start \"\" \"C:\\\\Users\\\\italo.gomes\\\\OneDrive - MMarra Distribuidora Automotiva\\\\Documentos\\\\mmarra-data-hub\\\\src\\\\data\\\\reports\\\\pedidos_compra_pendentes_20260204_175219.html\")"
+      "Bash(start \"\" \"C:\\\\Users\\\\italo.gomes\\\\OneDrive - MMarra Distribuidora Automotiva\\\\Documentos\\\\mmarra-data-hub\\\\src\\\\data\\\\reports\\\\pedidos_compra_pendentes_20260204_175219.html\")",
+      "Bash(findstr:*)"
     ]
   }
 }
