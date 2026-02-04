@@ -1,12 +1,433 @@
 # 📊 Progresso da Sessão - MMarra Data Hub
 
-**Data:** 2026-02-03
-**Última Atualização:** 2026-02-03 - Agente Engenheiro + Caso RIMA
-**Versão Atual:** v1.3.0 - Relatórios de Gestão com Detecção de Inconsistências
+**Data:** 2026-02-04
+**Última Atualização:** 2026-02-04 - Correções e Relatório Interativo
+**Versão Atual:** v1.6.0 - Relatório Pendências Compra Interativo + Correção Datas Sankhya
+
+---
+
+## 🔥 SESSÃO ATUAL (2026-02-04 - Parte 2) - CORREÇÕES E RELATÓRIOS 🔥
+
+### 📋 Objetivo
+1. Corrigir problema de conversão de datas do Sankhya (100% NaT)
+2. Investigar campos de status em TGFITE para pedidos de compra
+3. Criar relatório profissional de pedidos de compra pendentes com gráficos interativos
+
+### ✅ O que foi feito nesta sessão
+
+#### 1. Correção de Datas do Sankhya no Agente Engenheiro
+
+**Problema:** O pandas não reconhecia o formato de data do Sankhya (`DDMMYYYY HH:MM:SS`)
+
+**Solução aplicada em** `src/agents/engineer/transformers/cleaner.py`:
+
+```python
+SANKHYA_DATE_FORMATS = [
+    "%d%m%Y %H:%M:%S",    # 03022026 08:16:40 (formato padrao Sankhya)
+    "%d%m%Y",              # 03022026
+    "%Y-%m-%d %H:%M:%S",   # ISO
+    "%Y-%m-%d",
+    "%d/%m/%Y %H:%M:%S",
+    "%d/%m/%Y",
+]
+
+def _parse_sankhya_date(self, series, col_name, entity):
+    # Tenta cada formato até encontrar um que converta 80%+ dos valores
+```
+
+#### 2. Investigação de Campos de Status em TGFITE
+
+**Descobertas importantes:**
+
+| Campo | Valores | Significado |
+|-------|---------|-------------|
+| `ITE.PENDENTE` | 'S' / 'N' | **S** = Item pendente, **N** = Atendido |
+| `ITE.STATUSNOTA` | 'L' / 'A' / 'P' | L=Liberado, A=Aguardando, P=Pendência |
+| `ITE.QTDNEG` | NUMBER | Quantidade pedida |
+| `ITE.QTDENTREGUE` | NUMBER | Quantidade já entregue |
+
+**Lógica confirmada:**
+- `PENDENTE = 'S'` quando `QTDENTREGUE < QTDNEG`
+- `PENDENTE = 'N'` quando `QTDENTREGUE >= QTDNEG`
+
+**Resumo dos Pedidos de Compra (últimos 6 meses):**
+- Não Atendidos (PENDENTE='S'): 4.829 itens, 146.138 unidades
+- Parcialmente Atendidos: 159 itens, 3.393 unidades
+- Totalmente Atendidos: 4.971 itens
+
+#### 3. Relatório de Pedidos de Compra Pendentes (Interativo)
+
+**Arquivo:** `scripts/relatorios/gerar_pedidos_compra_pendentes.py`
+
+**Query simplificada (mais performática):**
+```sql
+SELECT ...
+FROM TGFCAB CAB
+JOIN TGFITE ITE ON ITE.NUNOTA = CAB.NUNOTA
+WHERE CAB.TIPMOV = 'O'
+  AND ITE.PENDENTE = 'S'  -- Campo direto, sem JOIN com TGFVAR
+  AND (ITE.QTDNEG - NVL(ITE.QTDENTREGUE, 0)) > 0
+```
+
+**Funcionalidades do relatório:**
+
+| Funcionalidade | Descrição |
+|----------------|-----------|
+| **Plotly.js** | Gráficos interativos com zoom, hover, click |
+| **Filtro Empresa** | Dropdown + click no gráfico de barras |
+| **Filtro Fornecedor** | Dropdown + click no gráfico horizontal |
+| **Filtro Período** | Campos de data "De" e "Até" |
+| **Ordenação Tabelas** | Click no cabeçalho da coluna |
+| **Busca** | Campo de busca para fornecedores |
+| **Atualização Dinâmica** | Todos os cards/gráficos atualizam com filtros |
+
+**Resultado:** 4.987 itens pendentes encontrados
+
+**Arquivo gerado:** `src/data/reports/pedidos_compra_pendentes_YYYYMMDD_HHMMSS.html`
+
+### 📁 Arquivos Modificados/Criados
+
+| Arquivo | Ação | Descrição |
+|---------|------|-----------|
+| `src/agents/engineer/transformers/cleaner.py` | Modificado | Adicionado _parse_sankhya_date() |
+| `scripts/relatorios/gerar_pedidos_compra_pendentes.py` | Modificado | Query simplificada + Plotly.js interativo |
+
+### 🎯 Tarefas Pendentes
+
+| Tarefa | Prioridade | Status |
+|--------|------------|--------|
+| Extrair vendas com histórico maior (90 dias) | Alta | Pendente |
+| Criar extractor de compras | Alta | Pendente |
+| Testar segmentação de clientes com dados reais | Média | Pendente |
+| Gerar relatório de KPIs com dados reais | Média | Pendente |
+| Integrar relatório de pendências ao Agente Analista | Baixa | Futuro |
+
+### 📝 Notas para Próxima Sessão
+
+1. **Relatório de pendências** está em script avulso (`scripts/relatorios/`), não no Agente Analista
+2. **Datas do Sankhya** agora são convertidas corretamente no cleaner
+3. **TGFITE.PENDENTE** é confiável para filtrar itens pendentes
+4. **TGFVAR** não é necessária para calcular pendências (usar QTDENTREGUE diretamente)
+
+---
+
+## 🔥 SESSÃO ANTERIOR (2026-02-04 - Parte 1) - AGENTE CIENTISTA IMPLEMENTADO 🔥
+
+### 📋 Objetivo
+Criar o Agente Cientista - módulo Python permanente para Machine Learning (previsão de demanda, detecção de anomalias, segmentação de clientes/produtos).
+
+### ✅ O que foi feito nesta sessão
+
+#### 1. Estrutura Completa do Agente Cientista Criada
+
+```
+src/agents/scientist/
+├── __init__.py              # Exports principais
+├── config.py                # Configurações de ML
+│
+├── forecasting/             # Previsão de demanda
+│   ├── __init__.py
+│   ├── preprocessor.py      # Preparação de dados para Prophet
+│   ├── demand_model.py      # Modelo Prophet
+│   └── predictor.py         # Interface simplificada
+│
+├── anomaly/                 # Detecção de anomalias
+│   ├── __init__.py
+│   ├── detector.py          # Isolation Forest
+│   └── alerts.py            # Gerador de alertas
+│
+├── clustering/              # Segmentação
+│   ├── __init__.py
+│   ├── customers.py         # RFM + K-Means
+│   └── products.py          # Performance + K-Means + ABC
+│
+├── models/                  # Modelos treinados (.pkl)
+│   ├── demand/
+│   ├── anomaly/
+│   └── clustering/
+│
+└── utils/
+    ├── __init__.py
+    ├── holidays.py          # Feriados brasileiros
+    └── metrics.py           # MAPE, MAE, RMSE, R2
+```
+
+#### 2. Módulos Implementados
+
+| Módulo | Algoritmo | Status |
+|--------|-----------|--------|
+| **Forecasting** | Prophet | ✅ Implementado (requer `pip install prophet`) |
+| **Anomaly** | Isolation Forest | ✅ Funcionando |
+| **Clustering - Clientes** | K-Means + RFM | ✅ Funcionando |
+| **Clustering - Produtos** | K-Means + Curva ABC | ✅ Funcionando |
+| **Utils - Holidays** | Feriados BR (fixos e móveis) | ✅ Funcionando |
+| **Utils - Metrics** | MAPE, MAE, RMSE, R2 | ✅ Funcionando |
+
+#### 3. Resultados dos Testes (Dados Sintéticos)
+
+```
+=== DETECÇÃO DE ANOMALIAS ===
+- Amostras: 2000
+- Anomalias detectadas: 100 (5.0%)
+- Isolation Forest: OK
+
+=== SEGMENTAÇÃO DE CLIENTES (RFM) ===
+- Clientes: 100
+- Segmentos: 4 (VIP, Regular, Esporádico, Inativo)
+- K-Means + RFM: OK
+
+=== SEGMENTAÇÃO DE PRODUTOS ===
+- Produtos: 50
+- Segmentos: 3 (Estrela, Vaca Leiteira, Abacaxi)
+- Curva ABC: Classe A (74%), B (18%), C (8%)
+
+=== MÉTRICAS ===
+- MAPE: 5.80%
+- MAE: 10.00
+- RMSE: 10.00
+- R2: 0.9800
+```
+
+#### 4. Problema Identificado nos Dados Reais
+
+**IMPORTANTE:** Os dados de vendas no Data Lake estão com colunas de data (DTNEG, DTFATUR) 100% nulas. Isso afeta:
+- Segmentação de Clientes (cálculo de Recency no RFM)
+- Previsão de Demanda (série temporal)
+
+**Ação necessária:** Verificar extração no Agente Engenheiro.
+
+#### 5. Scripts de Teste Criados
+
+| Script | Função |
+|--------|--------|
+| `scripts/testes/testar_agente_cientista.py` | Teste com dados reais do Data Lake |
+| `scripts/testes/testar_cientista_sintetico.py` | Teste com dados sintéticos (validação de algoritmos) |
+
+### 📁 Arquivos Criados/Modificados
+
+| Arquivo | Status |
+|---------|--------|
+| `src/agents/scientist/__init__.py` | ✅ Criado |
+| `src/agents/scientist/config.py` | ✅ Criado |
+| `src/agents/scientist/forecasting/__init__.py` | ✅ Criado |
+| `src/agents/scientist/forecasting/preprocessor.py` | ✅ Criado |
+| `src/agents/scientist/forecasting/demand_model.py` | ✅ Criado |
+| `src/agents/scientist/forecasting/predictor.py` | ✅ Criado |
+| `src/agents/scientist/anomaly/__init__.py` | ✅ Criado |
+| `src/agents/scientist/anomaly/detector.py` | ✅ Criado |
+| `src/agents/scientist/anomaly/alerts.py` | ✅ Criado |
+| `src/agents/scientist/clustering/__init__.py` | ✅ Criado |
+| `src/agents/scientist/clustering/customers.py` | ✅ Criado (melhorado tratamento de erros) |
+| `src/agents/scientist/clustering/products.py` | ✅ Criado |
+| `src/agents/scientist/utils/__init__.py` | ✅ Criado |
+| `src/agents/scientist/utils/holidays.py` | ✅ Criado |
+| `src/agents/scientist/utils/metrics.py` | ✅ Criado |
+| `docs/agentes/scientist.md` | ✅ Atualizado |
+| `scripts/testes/testar_cientista_sintetico.py` | ✅ Criado |
+
+### 🎯 Próximos Passos
+
+1. [ ] Corrigir extração de datas no Agente Engenheiro
+2. [ ] Instalar Prophet para testes de previsão de demanda
+3. [ ] Implementar cache de modelos treinados (.pkl)
+4. [ ] Implementar Agente LLM (orquestrador com tools)
+
+### 💬 Mensagem para o Próximo Claude
+
+> **Contexto:** Agente Cientista 100% implementado e testado com dados sintéticos.
+>
+> **Estrutura:** `src/agents/scientist/` com forecasting, anomaly e clustering.
+>
+> **Algoritmos:** Prophet (demanda), Isolation Forest (anomalias), K-Means (segmentação).
+>
+> **Retorno:** Todos os métodos retornam dicts estruturados para o Agente LLM consumir.
+>
+> **IMPORTANTE:** Dados reais têm colunas de data vazias - verificar extração.
+>
+> **Documentação:** `docs/agentes/scientist.md` com exemplos de uso.
+>
+> **Próximo:** Corrigir extração de dados ou começar Agente LLM.
+
+---
+
+## 🔄 SESSÃO ANTERIOR (2026-02-04) - AGENTE ANALISTA IMPLEMENTADO 🔄
+
+### 📋 Objetivo
+Criar o Agente Analista - módulo Python permanente para calcular KPIs, gerar relatórios e preparar dados para dashboards.
+
+### ✅ O que foi feito nesta sessão
+
+#### 1. Estrutura Completa do Agente Analista Criada
+
+```
+src/agents/analyst/
+├── __init__.py              # Exports principais
+├── config.py                # Configurações centralizadas
+├── data_loader.py           # Carregador com fallback DL -> API
+│
+├── kpis/
+│   ├── __init__.py
+│   ├── base.py              # Classe base abstrata
+│   ├── vendas.py            # 9 KPIs de vendas
+│   ├── compras.py           # 7 KPIs de compras
+│   └── estoque.py           # 9 KPIs de estoque
+│
+├── reports/
+│   ├── __init__.py
+│   ├── generator.py         # ReportGenerator
+│   └── templates/
+│       └── daily.html       # Template HTML
+│
+└── dashboards/
+    ├── __init__.py
+    └── data_prep.py         # DashboardDataPrep
+```
+
+#### 2. KPIs Implementados
+
+| Módulo | KPIs | Status |
+|--------|------|--------|
+| **Vendas** | faturamento_total, ticket_medio, qtd_pedidos, vendas_por_vendedor, vendas_por_cliente, taxa_desconto, crescimento_mom, top_produtos, curva_abc_clientes | ✅ |
+| **Compras** | volume_compras, custo_medio_produto, lead_time_fornecedor, pedidos_pendentes, taxa_conferencia_wms, top_fornecedores, pedidos_por_status_wms | ✅ |
+| **Estoque** | estoque_total_valor, estoque_total_unidades, giro_estoque, produtos_sem_estoque, cobertura_estoque, divergencia_erp_wms, curva_abc_estoque, estoque_por_local, estoque_por_empresa | ✅ |
+
+#### 3. Data Loader com Fallback
+
+- **Primeira tentativa:** Data Lake (arquivos Parquet locais)
+- **Fallback:** API Sankhya (query direta)
+- Cache em memória com TTL configurável
+
+#### 4. Gerador de Relatórios HTML
+
+- Template Jinja2 responsivo
+- Suporte a múltiplos KPIs
+- Filtros de formatação (moeda, porcentagem, número)
+
+#### 5. Preparação para Dashboards
+
+- `prepare_time_series()`: Série temporal para gráficos de linha
+- `prepare_ranking()`: Ranking para gráficos de barras
+- `prepare_curva_abc()`: Curva ABC/Pareto
+- `prepare_pie_chart()`: Gráficos de pizza
+- `prepare_heatmap()`: Mapas de calor
+
+### 📁 Arquivos Criados
+
+| Arquivo | Linhas |
+|---------|--------|
+| `src/agents/analyst/__init__.py` | 45 |
+| `src/agents/analyst/config.py` | 130 |
+| `src/agents/analyst/data_loader.py` | 260 |
+| `src/agents/analyst/kpis/__init__.py` | 15 |
+| `src/agents/analyst/kpis/base.py` | 140 |
+| `src/agents/analyst/kpis/vendas.py` | 280 |
+| `src/agents/analyst/kpis/compras.py` | 230 |
+| `src/agents/analyst/kpis/estoque.py` | 290 |
+| `src/agents/analyst/reports/__init__.py` | 10 |
+| `src/agents/analyst/reports/generator.py` | 280 |
+| `src/agents/analyst/reports/templates/daily.html` | 180 |
+| `src/agents/analyst/dashboards/__init__.py` | 10 |
+| `src/agents/analyst/dashboards/data_prep.py` | 280 |
+| `docs/agentes/analyst.md` | 300 |
+| **Total** | **~2.450 linhas** |
+
+### 🎯 Próximos Passos
+
+1. [ ] Testar KPIs com dados reais do Data Lake
+2. [ ] Criar script de exemplo para gerar relatório
+3. [ ] Implementar Agente Cientista (ML - Prophet, Anomalias)
+4. [ ] Implementar Agente LLM (orquestrador com tools)
+
+### 💬 Mensagem para o Próximo Claude
+
+> **Contexto:** Agente Analista 100% implementado e documentado.
+>
+> **Estrutura:** `src/agents/analyst/` com KPIs de vendas, compras e estoque.
+>
+> **Data Loader:** Implementa fallback Data Lake → API Sankhya.
+>
+> **Retorno:** Todos os KPIs retornam dicts estruturados para o Agente LLM consumir.
+>
+> **Documentação:** `docs/agentes/analyst.md` com exemplos de uso.
+>
+> **Próximo:** Testar com dados reais ou começar Agente Cientista.
+
+---
+
+## 🔄 SESSÃO ANTERIOR (2026-02-04) - INVESTIGAÇÃO BUG FILTRO EMPRESA 🔄
+
+### 📋 Objetivo
+Investigar e documentar bug na tela "Empenho de Produtos" onde o filtro de Empresa não funciona para o grid "Itens de pedido de venda".
+
+### ✅ O que foi feito nesta sessão
+
+#### 1. Investigação do Bug - Filtro Empresa
+- **Problema identificado:** Filtro de Empresa funciona para "Itens de compra" mas NÃO para "Itens de pedido de venda"
+- **Causa raiz encontrada:** Query `buscaPossiveisEmpenhoProdVenda` não possui filtro `CAB.CODEMP = ?`
+- **Comparação:** Query `buscaPossiveisProdutosParaEmpenho` (compras) TEM o filtro correto
+
+#### 2. Descobertas Técnicas
+
+| Descoberta | Detalhe |
+|------------|---------|
+| TGWEMPE não tem CODEMP | Campo CODEMP não existe diretamente na tabela de empenhos |
+| TGFITE tem CODEMP | Tabela de itens tem o campo |
+| Solução requer JOIN | Precisa `JOIN TGFCAB CAB ON EMPE.NUNOTA = CAB.NUNOTA` + `WHERE CAB.CODEMP = ?` |
+
+#### 3. Workaround Aplicado
+- Criado filtro personalizado na tela via "Filtro venda"
+- Condição: `Item Nota/Pedido >> Empresa >> Cód. Empresa = 1`
+- **Limitação:** Filtro é fixo (sempre empresa 1), não dinâmico
+
+#### 4. Documentação do Bug Criada
+- **Arquivo:** `docs/bugs/BUG_FILTRO_EMPRESA_EMPENHO_PRODUTOS.md`
+- Contém: causa raiz, evidências técnicas, correção sugerida
+- Pronto para enviar ao suporte Sankhya
+
+#### 5. Scripts de Investigação Criados
+
+| Script | Função |
+|--------|--------|
+| `investigar_tela_empenho.py` | Investiga Views e estrutura da tela |
+| `investigar_view_empenho.py` | Investiga Views VGW* e estrutura TGWEMPE |
+
+### 📁 Arquivos Criados/Modificados
+
+```
+docs/bugs/
+└── BUG_FILTRO_EMPRESA_EMPENHO_PRODUTOS.md   # NOVO - Documentação do bug
+
+scripts/investigacao/
+├── investigar_tela_empenho.py               # NOVO - Investiga tela
+└── investigar_view_empenho.py               # NOVO - Investiga views
+```
+
+### 🎯 Próximos Passos
+1. [ ] Abrir chamado no suporte Sankhya com a documentação do bug
+2. [ ] Aguardar correção ou implementar workaround permanente
+3. [ ] Caso RIMA: Verificar se foi resolvido pelo setor responsável
+
+---
+
+### 💬 Mensagem para o Próximo Claude
+
+> **Contexto:** Investigamos bug na tela "Empenho de Produtos" do Sankhya.
+>
+> **Bug:** Filtro de Empresa não funciona para grid "Itens de pedido de venda".
+>
+> **Causa:** Query `EmpenhoProdutoSP.buscaPossiveisEmpenhoProdVenda` não tem filtro CODEMP.
+>
+> **Workaround:** Filtro personalizado fixo criado na tela.
+>
+> **Documentação:** `docs/bugs/BUG_FILTRO_EMPRESA_EMPENHO_PRODUTOS.md` pronta para suporte.
+>
+> **Caso RIMA:** Encaminhado para setor responsável, 8 empenhos travados no pedido 1183490.
 
 ---
 
 ## 🔥 PENDENTE - CASO RIMA (1183490) 🔥
+
+**Status:** Encaminhado para setor responsável (2026-02-04)
 
 ### Situação Identificada
 - **Pedido 1183490**: Cancelado/deletado, mas **8 empenhos ainda travados**
@@ -2263,5 +2684,5 @@ Boa sorte! 🚀
 
 ---
 
-**Última atualização:** 2026-02-01 (teste MCP - autenticação pendente)
-**Versão:** v0.4.1
+**Última atualização:** 2026-02-04 (Relatório Interativo + Correção Datas)
+**Versão:** v1.6.0

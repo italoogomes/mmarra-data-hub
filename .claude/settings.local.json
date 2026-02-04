@@ -24,7 +24,9 @@
       "Bash(\"C:\\\\Users\\\\italo.gomes\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" extrair_cadastros_completos_v2.py)",
       "Bash(\"C:\\\\Users\\\\italo.gomes\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" extrair_tudo.py)",
       "Bash(start \"\" \"c:\\\\Users\\\\italo.gomes\\\\OneDrive - MMarra Distribuidora Automotiva\\\\Documentos\\\\mmarra-data-hub\\\\output\\\\estoque\\\\estoque_empresa6.csv\")",
-      "Bash(start \"\" \"c:\\\\Users\\\\italo.gomes\\\\OneDrive - MMarra Distribuidora Automotiva\\\\Documentos\\\\mmarra-data-hub\\\\output\\\\html\\\\relatorio_recebimento_canhoto.html\")"
+      "Bash(start \"\" \"c:\\\\Users\\\\italo.gomes\\\\OneDrive - MMarra Distribuidora Automotiva\\\\Documentos\\\\mmarra-data-hub\\\\output\\\\html\\\\relatorio_recebimento_canhoto.html\")",
+      "Bash(dir:*)",
+      "Bash(start \"\" \"C:\\\\Users\\\\italo.gomes\\\\OneDrive - MMarra Distribuidora Automotiva\\\\Documentos\\\\mmarra-data-hub\\\\src\\\\data\\\\reports\\\\pedidos_compra_pendentes_20260204_175219.html\")"
     ]
   }
 }

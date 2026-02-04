@@ -206,6 +206,16 @@ class DataCleaner:
 
         return df
 
+    # Formatos de data conhecidos do Sankhya
+    SANKHYA_DATE_FORMATS = [
+        "%d%m%Y %H:%M:%S",    # 03022026 08:16:40 (formato padrao Sankhya)
+        "%d%m%Y",              # 03022026
+        "%Y-%m-%d %H:%M:%S",   # 2026-02-03 08:16:40 (ISO)
+        "%Y-%m-%d",            # 2026-02-03
+        "%d/%m/%Y %H:%M:%S",   # 03/02/2026 08:16:40
+        "%d/%m/%Y",            # 03/02/2026
+    ]
+
     def _validate_types(
         self,
         df: pd.DataFrame,
@@ -218,12 +228,52 @@ class DataCleaner:
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors="coerce")
 
-        # Converter datas
+        # Converter datas (tentar múltiplos formatos do Sankhya)
         for col in config.get("date_fields", []):
             if col in df.columns:
-                df[col] = pd.to_datetime(df[col], errors="coerce")
+                df[col] = self._parse_sankhya_date(df[col], col, entity)
 
         return df
+
+    def _parse_sankhya_date(
+        self,
+        series: pd.Series,
+        col_name: str,
+        entity: str
+    ) -> pd.Series:
+        """
+        Converte coluna de data tentando múltiplos formatos do Sankhya.
+
+        O Sankhya retorna datas no formato DDMMYYYY HH:MM:SS que o pandas
+        não reconhece automaticamente.
+        """
+        # Se já é datetime, retornar
+        if pd.api.types.is_datetime64_any_dtype(series):
+            return series
+
+        # Contar valores não-nulos originais
+        non_null_original = series.notna().sum()
+
+        if non_null_original == 0:
+            logger.warning(f"[{entity}] Coluna {col_name} está 100% nula")
+            return pd.to_datetime(series, errors="coerce")
+
+        # Tentar cada formato conhecido
+        for fmt in self.SANKHYA_DATE_FORMATS:
+            try:
+                result = pd.to_datetime(series, format=fmt, errors="coerce")
+                non_null_converted = result.notna().sum()
+
+                # Se converteu pelo menos 80% dos valores, usar este formato
+                if non_null_converted >= non_null_original * 0.8:
+                    logger.debug(f"[{entity}] Coluna {col_name} convertida com formato {fmt}")
+                    return result
+            except Exception:
+                continue
+
+        # Fallback: tentar inferir automaticamente
+        logger.warning(f"[{entity}] Coluna {col_name} - nenhum formato conhecido funcionou, tentando inferir...")
+        return pd.to_datetime(series, errors="coerce")
 
     def _add_metadata(self, df: pd.DataFrame, entity: str) -> pd.DataFrame:
         """Adiciona colunas de metadados."""

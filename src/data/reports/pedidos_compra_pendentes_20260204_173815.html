@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedidos de Compra Pendentes - MMarra</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #1565c0;
+            --primary-dark: #0d47a1;
+            --secondary: #ff6f00;
+            --success: #2e7d32;
+            --danger: #c62828;
+            --warning: #f9a825;
+            --light: #f5f5f5;
+            --dark: #212121;
+            --gray: #757575;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 30px 40px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left h1 {
+            font-size: 28px;
+            color: var(--dark);
+            margin-bottom: 8px;
+        }
+
+        .header-left .subtitle {
+            color: var(--gray);
+            font-size: 14px;
+        }
+
+        .header-right {
+            text-align: right;
+        }
+
+        .header-right .total {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .header-right .total-label {
+            color: var(--gray);
+            font-size: 14px;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+        }
+
+        .card .icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            font-size: 24px;
+        }
+
+        .card .icon.blue { background: #e3f2fd; }
+        .card .icon.orange { background: #fff3e0; }
+        .card .icon.green { background: #e8f5e9; }
+        .card .icon.purple { background: #f3e5f5; }
+        .card .icon.red { background: #ffebee; }
+
+        .card .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .card .label {
+            color: var(--gray);
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .row-3 {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .section h2 {
+            font-size: 18px;
+            color: var(--dark);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section h2::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 280px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 14px 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: var(--light);
+            color: var(--dark);
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        tr:hover {
+            background: #fafafa;
+        }
+
+        .valor {
+            text-align: right;
+            font-family: 'Consolas', monospace;
+            font-weight: 600;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-danger {
+            background: #ffebee;
+            color: var(--danger);
+        }
+
+        .badge-warning {
+            background: #fff8e1;
+            color: #f57c00;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 4px;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            padding: 30px;
+            font-size: 13px;
+            opacity: 0.8;
+        }
+
+        .alert {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .alert-icon {
+            font-size: 24px;
+        }
+
+        @media (max-width: 1200px) {
+            .cards { grid-template-columns: repeat(3, 1fr); }
+            .row { grid-template-columns: 1fr; }
+            .row-3 { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            .cards { grid-template-columns: repeat(2, 1fr); }
+            .header { flex-direction: column; text-align: center; gap: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <h1>Pedidos de Compra Pendentes</h1>
+                <div class="subtitle">Relatorio gerado em 04/02/2026 as 17:38</div>
+            </div>
+            <div class="header-right">
+                <div class="total">R$ 6,420,070.30</div>
+                <div class="total-label">Valor Total Pendente</div>
+            </div>
+        </div>
+
+        <div class="cards">
+            <div class="card">
+                <div class="icon blue">📋</div>
+                <div class="value">928</div>
+                <div class="label">Pedidos</div>
+            </div>
+            <div class="card">
+                <div class="icon orange">🏭</div>
+                <div class="value">234</div>
+                <div class="label">Fornecedores</div>
+            </div>
+            <div class="card">
+                <div class="icon green">📦</div>
+                <div class="value">5,000</div>
+                <div class="label">Itens</div>
+            </div>
+            <div class="card">
+                <div class="icon purple">🏷️</div>
+                <div class="value">3,439</div>
+                <div class="label">Produtos</div>
+            </div>
+            <div class="card">
+                <div class="icon red">🏢</div>
+                <div class="value">7</div>
+                <div class="label">Empresas</div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="section">
+                <h2>Valor Pendente por Empresa</h2>
+                <div class="chart-container">
+                    <canvas id="chartEmpresa"></canvas>
+                </div>
+            </div>
+            <div class="section">
+                <h2>Distribuicao por Tipo de Operacao</h2>
+                <div class="chart-container">
+                    <canvas id="chartTipo"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="section">
+                <h2>Top 10 Fornecedores</h2>
+                <div class="chart-container">
+                    <canvas id="chartFornecedor"></canvas>
+                </div>
+            </div>
+            <div class="section">
+                <h2>Evolucao Mensal</h2>
+                <div class="chart-container">
+                    <canvas id="chartMes"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" style="margin-bottom: 24px;">
+            <h2>Detalhamento por Empresa</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Empresa</th>
+                        <th>Pedidos</th>
+                        <th class="valor">Valor Pendente</th>
+                        <th class="valor">% do Total</th>
+                        <th style="width: 200px;">Distribuicao</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <tr>
+                        <td><strong>Empresa 7</strong></td>
+                        <td>212</td>
+                        <td class="valor">R$ 3,240,887.26</td>
+                        <td class="valor">50.5%</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" style="width: 50.480557128164335%"></div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><strong>Empresa 1</strong></td>
+                        <td>438</td>
+                        <td class="valor">R$ 2,467,508.15</td>
+                        <td class="valor">38.4%</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" style="width: 38.4342854382014%"></div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><strong>Empresa 4</strong></td>
+                        <td>78</td>
+                        <td class="valor">R$ 277,754.54</td>
+                        <td class="valor">4.3%</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" style="width: 4.326347350250688%"></div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><strong>Empresa 2</strong></td>
+                        <td>113</td>
+                        <td class="valor">R$ 227,805.54</td>
+                        <td class="valor">3.5%</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" style="width: 3.5483339904358258%"></div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><strong>Empresa 6</strong></td>
+                        <td>45</td>
+                        <td class="valor">R$ 131,780.33</td>
+                        <td class="valor">2.1%</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" style="width: 2.052630669114078%"></div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><strong>Empresa 8</strong></td>
+                        <td>40</td>
+                        <td class="valor">R$ 69,030.05</td>
+                        <td class="valor">1.1%</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" style="width: 1.0752226525806932%"></div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><strong>Empresa 5</strong></td>
+                        <td>2</td>
+                        <td class="valor">R$ 5,304.44</td>
+                        <td class="valor">0.1%</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" style="width: 0.08262277125296272%"></div>
+                            </div>
+                        </td>
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section" style="margin-bottom: 24px;">
+            <h2>Top 15 Fornecedores com Pendencias</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fornecedor</th>
+                        <th>Pedidos</th>
+                        <th>Itens</th>
+                        <th class="valor">Valor Pendente</th>
+                        <th class="valor">% do Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <tr>
+                        <td>DONALDSON DO BRASIL EQUIP INDUSTRIAIS LT C025253</td>
+                        <td>12</td>
+                        <td>141</td>
+                        <td class="valor">R$ 990,153.35</td>
+                        <td class="valor"><span class="badge badge-danger">15.4%</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>JOST BRASIL SISTEMAS AUTOMOTIVOS LTDA F001687</td>
+                        <td>7</td>
+                        <td>35</td>
+                        <td class="valor">R$ 550,711.41</td>
+                        <td class="valor"><span class="badge badge-danger">8.6%</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>TOME SA INDUSTRIA DE AUTO PECAS TOME F002562</td>
+                        <td>3</td>
+                        <td>7</td>
+                        <td class="valor">R$ 410,448.20</td>
+                        <td class="valor"><span class="badge badge-danger">6.4%</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>EATON LTDA F000595</td>
+                        <td>15</td>
+                        <td>145</td>
+                        <td class="valor">R$ 400,361.65</td>
+                        <td class="valor"><span class="badge badge-danger">6.2%</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>TMD FRICTION DO BRASIL SA F005269</td>
+                        <td>6</td>
+                        <td>22</td>
+                        <td class="valor">R$ 276,810.47</td>
+                        <td class="valor"><span class="badge badge-warning">4.3%</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>THOR COMPONENTES AUTOMOTIVOS LTDA F001752</td>
+                        <td>9</td>
+                        <td>69</td>
+                        <td class="valor">R$ 179,882.38</td>
+                        <td class="valor"><span class="badge badge-warning">2.8%</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>MMARRA  ITUMBIARA GO</td>
+                        <td>129</td>
+                        <td>405</td>
+                        <td class="valor">R$ 178,627.44</td>
+                        <td class="valor"><span class="badge badge-warning">2.8%</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>MMARRA ARACATUBA SP</td>
+                        <td>66</td>
+                        <td>318</td>
+                        <td class="valor">R$ 152,113.45</td>
+                        <td class="valor"><span class="badge badge-warning">2.4%</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>MASTER SISTEMAS AUTOMOTIVOS LTDA F003871</td>
+                        <td>7</td>
+                        <td>46</td>
+                        <td class="valor">R$ 151,943.27</td>
+                        <td class="valor"><span class="badge badge-warning">2.4%</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>INTERNATIONAL IND AUTOMOTIVA DA AMERICA DO SUL F00</td>
+                        <td>7</td>
+                        <td>233</td>
+                        <td class="valor">R$ 151,513.92</td>
+                        <td class="valor"><span class="badge badge-warning">2.4%</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>SUSIN FRANCESCUTTI METALURGICA LTDA</td>
+                        <td>2</td>
+                        <td>32</td>
+                        <td class="valor">R$ 150,176.67</td>
+                        <td class="valor"><span class="badge badge-warning">2.3%</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>ZF AUMOTIVE BRASIL LTDA F008038</td>
+                        <td>5</td>
+                        <td>169</td>
+                        <td class="valor">R$ 147,359.52</td>
+                        <td class="valor"><span class="badge badge-warning">2.3%</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>MERITOR DO BRASIL SISTEMAS AUTOMOTIVOS LTDA F00086</td>
+                        <td>10</td>
+                        <td>135</td>
+                        <td class="valor">R$ 141,236.74</td>
+                        <td class="valor"><span class="badge badge-warning">2.2%</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>INDUSTRIA E COMERCIO DE AUTO PECAS REI LTDA F00010</td>
+                        <td>6</td>
+                        <td>141</td>
+                        <td class="valor">R$ 137,984.81</td>
+                        <td class="valor"><span class="badge badge-warning">2.1%</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>FIRST SA</td>
+                        <td>1</td>
+                        <td>13</td>
+                        <td class="valor">R$ 123,977.00</td>
+                        <td class="valor"><span class="badge ">1.9%</span></td>
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+
+        <div class="alert">
+            <span class="alert-icon">⚠️</span>
+            <div>
+                <strong>Atencao:</strong> Existem pedidos pendentes desde 06/01/2026 (29 dias). Verifique os pedidos mais antigos abaixo.
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Pedidos Mais Antigos</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nro Unico</th>
+                        <th>Nro Pedido</th>
+                        <th>Fornecedor</th>
+                        <th>Data</th>
+                        <th class="valor">Valor Pendente</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <tr>
+                        <td>1167978</td>
+                        <td>305</td>
+                        <td>MERITOR DO BRASIL SISTEMAS AUTOMOTIVOS L</td>
+                        <td>06/01/2026</td>
+                        <td class="valor">R$ 11,008.87</td>
+                    </tr>
+
+                    <tr>
+                        <td>1168707</td>
+                        <td>64</td>
+                        <td>ZF AUMOTIVE BRASIL LTDA F008038</td>
+                        <td>06/01/2026</td>
+                        <td class="valor">R$ 90,740.52</td>
+                    </tr>
+
+                    <tr>
+                        <td>1168836</td>
+                        <td>17</td>
+                        <td>MMARRA ARACATUBA SP</td>
+                        <td>06/01/2026</td>
+                        <td class="valor">R$ 2,382.25</td>
+                    </tr>
+
+                    <tr>
+                        <td>1168834</td>
+                        <td>16</td>
+                        <td>MMARRA ARACATUBA SP</td>
+                        <td>06/01/2026</td>
+                        <td class="valor">R$ 373.58</td>
+                    </tr>
+
+                    <tr>
+                        <td>1168825</td>
+                        <td>14</td>
+                        <td>MMARRA  ITUMBIARA GO</td>
+                        <td>06/01/2026</td>
+                        <td class="valor">R$ 199.96</td>
+                    </tr>
+
+                    <tr>
+                        <td>1168295</td>
+                        <td>13</td>
+                        <td>MMARRA ARACATUBA SP</td>
+                        <td>06/01/2026</td>
+                        <td class="valor">R$ 116,235.66</td>
+                    </tr>
+
+                    <tr>
+                        <td>1168838</td>
+                        <td>18</td>
+                        <td>MMARRA ARACATUBA SP</td>
+                        <td>06/01/2026</td>
+                        <td class="valor">R$ 718.13</td>
+                    </tr>
+
+                    <tr>
+                        <td>1168847</td>
+                        <td>19</td>
+                        <td>MMARRA ARACATUBA SP</td>
+                        <td>06/01/2026</td>
+                        <td class="valor">R$ 2,173.69</td>
+                    </tr>
+
+                    <tr>
+                        <td>1167930</td>
+                        <td>57</td>
+                        <td>INTERNATIONAL IND AUTOMOTIVA DA AMERICA </td>
+                        <td>06/01/2026</td>
+                        <td class="valor">R$ 204.45</td>
+                    </tr>
+
+                    <tr>
+                        <td>1168596</td>
+                        <td>62</td>
+                        <td>CASTERTECH FUNDICAO E TECNOLOGIA LTDA F0</td>
+                        <td>06/01/2026</td>
+                        <td class="valor">R$ 11,077.76</td>
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+
+        <div class="footer">
+            <strong>MMarra Data Hub</strong> - Relatorio gerado automaticamente<br>
+            04/02/2026 17:38:15
+        </div>
+    </div>
+
+    <script>
+        // Cores
+        const colors = {
+            primary: '#1565c0',
+            secondary: '#ff6f00',
+            success: '#2e7d32',
+            danger: '#c62828',
+            purple: '#7b1fa2',
+            teal: '#00796b',
+            pink: '#c2185b',
+            indigo: '#303f9f'
+        };
+
+        const colorArray = ['#1565c0', '#ff6f00', '#2e7d32', '#c62828', '#7b1fa2', '#00796b', '#c2185b', '#303f9f', '#455a64', '#5d4037'];
+
+        // Grafico por Empresa
+        new Chart(document.getElementById('chartEmpresa'), {
+            type: 'bar',
+            data: {
+                labels: ["Emp 7", "Emp 1", "Emp 4", "Emp 2", "Emp 6", "Emp 8", "Emp 5"],
+                datasets: [{
+                    label: 'Valor Pendente (R$)',
+                    data: [3240887.25653, 2467508.14525, 277754.5414, 227805.53674, 131780.332, 69030.0502, 5304.4400000000005],
+                    backgroundColor: colorArray,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + (value/1000).toFixed(0) + 'k';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Grafico por Tipo
+        new Chart(document.getElementById('chartTipo'), {
+            type: 'doughnut',
+            data: {
+                labels: ["PEDIDO DE COMPRA - REVEND", "PEDIDO DE COMPRA - ENTREG", "PEDIDO - TRANSFERENCIA EN", "PEDIDO TRANSFER\u00caNCIA ENTR", "PEDIDO DE COMPRA - BENEFI", "PEDIDO DE COMPRA - USO/CO"],
+                datasets: [{
+                    data: [5212834.30131, 654320.7682, 232364.71706999998, 121698.63002, 105311.6, 57449.38274],
+                    backgroundColor: colorArray,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 15
+                        }
+                    }
+                }
+            }
+        });
+
+        // Grafico por Fornecedor
+        new Chart(document.getElementById('chartFornecedor'), {
+            type: 'bar',
+            data: {
+                labels: ["DONALDSON DO BRASIL ", "JOST BRASIL SISTEMAS", "TOME SA INDUSTRIA DE", "EATON LTDA F000595", "TMD FRICTION DO BRAS", "THOR COMPONENTES AUT", "MMARRA  ITUMBIARA GO", "MMARRA ARACATUBA SP", "MASTER SISTEMAS AUTO", "INTERNATIONAL IND AU"],
+                datasets: [{
+                    label: 'Valor Pendente (R$)',
+                    data: [990153.34658, 550711.4077, 410448.2, 400361.65, 276810.46684999997, 179882.3822, 178627.43667, 152113.4504, 151943.273, 151513.9183],
+                    backgroundColor: '#1565c0',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + (value/1000).toFixed(0) + 'k';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Grafico por Mes
+        new Chart(document.getElementById('chartMes'), {
+            type: 'line',
+            data: {
+                labels: ["2026-01", "2026-02"],
+                datasets: [{
+                    label: 'Valor Pendente (R$)',
+                    data: [5834439.64746, 585630.65466],
+                    borderColor: '#1565c0',
+                    backgroundColor: 'rgba(21, 101, 192, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 6,
+                    pointBackgroundColor: '#1565c0'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + (value/1000).toFixed(0) + 'k';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
