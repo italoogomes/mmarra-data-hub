@@ -1,12 +1,103 @@
 # 📊 Progresso da Sessão - MMarra Data Hub
 
 **Data:** 2026-02-04
-**Última Atualização:** 2026-02-04 - Agentes Autônomos Implementados
-**Versão Atual:** v1.7.0 - Interfaces Simplificadas (Engenheiro + Analista)
+**Última Atualização:** 2026-02-04 - IA com RAG Implementada
+**Versão Atual:** v1.8.0 - Sistema de IA com RAG
 
 ---
 
-## 🔥 SESSÃO ATUAL (2026-02-04 - Parte 3) - AGENTES AUTÔNOMOS 🔥
+## 🔥 SESSÃO ATUAL (2026-02-04 - Parte 4) - TREINAMENTO IA + RAG 🔥
+
+### 📋 Objetivo
+Treinar a IA do Data Hub para responder perguntas sobre o negócio usando ML (Prophet) e LLM (Groq) com RAG.
+
+### ✅ O que foi feito nesta sessão
+
+#### 1. Treinamento de Modelo ML (Prophet)
+
+**Arquivo:** `scripts/treinar_modelos.py`
+
+- Carrega dados de vendas do Data Lake (`src/data/raw/vendas/vendas.parquet`)
+- Identifica top 10 produtos mais vendidos
+- Treina modelo Prophet para previsão de demanda
+- Salva modelo em `src/agents/scientist/models/demand/`
+
+**Modelo treinado:** Produto 261301 (MOLA PATIM FREIO)
+
+#### 2. Sistema de Agentes Autônomos com Groq
+
+**Arquivos criados:**
+- `src/agents/base.py` - Classe base para agentes com LLM
+- `src/agents/orchestrator/agent.py` - Orquestrador principal
+- `src/agents/llm/tools/forecast_tool.py` - Tool de previsão
+- `src/agents/llm/tools/kpi_tool.py` - Tool de KPIs
+
+**Modelo LLM:** `qwen/qwen3-32b` (via Groq API)
+
+**Como usar:**
+```bash
+python scripts/chat_ia.py "Qual o faturamento do mês?"
+```
+
+#### 3. RAG - Busca na Documentação
+
+**Arquivos criados:**
+- `src/agents/shared/rag/embeddings.py` - TF-IDF (offline)
+- `src/agents/shared/rag/vectorstore.py` - Armazenamento e busca
+- `src/agents/shared/rag/retriever.py` - Interface para agentes
+
+**Documentos indexados (617 chunks):**
+- `docs/de-para/sankhya/*.md` - Mapeamento de tabelas
+- `docs/bugs/*.md` - Problemas conhecidos
+- `docs/agentes/*.md` - Specs dos agentes
+- `docs/wms/*.md` - Documentação WMS
+- `queries/**/*.sql` - Queries úteis
+
+**Testado com:**
+- "O que significa TIPMOV?" → Explicou valores C, O, D, P, V, E, T, J
+- "Quais bugs já encontramos?" → Listou divergências ERP/WMS
+- "Como consultar pedidos pendentes?" → Retornou query SQL
+
+#### 4. Organização de Arquivos
+
+**CLAUDE.md atualizado** com seção "ORGANIZAÇÃO DE ARQUIVOS"
+
+**Pastas criadas:**
+- `docs/investigacoes/` - Para descobertas
+- `docs/bugs/` - Para problemas
+- `output/divergencias/` - Para divergências
+- `output/reports/` - Para relatórios
+
+**Arquivos reorganizados:**
+- `output/curl_*.txt` → `output/divergencias/2026-*_*.txt`
+- `docs/bugs/BUG_*.md` → `docs/bugs/2026-*_*.md`
+
+### 📦 Commits Realizados
+
+1. `5a119df` - feat: Implementar sistema de agentes autônomos com Groq
+2. `4d81b8f` - fix: Corrigir processamento de tool calls no agente
+3. `4d98cf2` - fix: Usar modelo qwen/qwen3-32b para melhor suporte a tools
+4. `fb91a47` - docs: Adicionar seção de organização de arquivos
+5. `0a7a665` - feat: Implementar RAG para agentes consultarem documentação
+
+### 🎯 Próximos Passos
+
+1. **Extrair mais dados históricos** - Atualmente só 8 dias, precisa 90+ para previsões melhores
+2. **Treinar modelos para mais produtos** - Expandir Prophet para top 10
+3. **Adicionar mais tools ao Orquestrador** - Estoque, compras, etc.
+4. **Melhorar RAG com embeddings reais** - Quando tiver internet, usar HuggingFace
+
+### 📊 Ferramentas Disponíveis no Chat
+
+| Tool | Função | Exemplo |
+|------|--------|---------|
+| `search_documentation` | Busca na documentação | "O que significa TIPMOV?" |
+| `forecast_demand` | Previsão de vendas | "Previsão do produto 261301" |
+| `get_kpis` | KPIs de vendas/compras/estoque | "Faturamento do mês" |
+
+---
+
+## 🔥 SESSÃO ANTERIOR (2026-02-04 - Parte 3) - AGENTES AUTÔNOMOS 🔥
 
 ### 📋 Objetivo
 Tornar os agentes Engenheiro e Analista mais autônomos, permitindo chamadas de uma linha com boas práticas automáticas.

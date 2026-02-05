@@ -10,10 +10,55 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 ## [Não Lançado]
 
 ### 🔄 Em Desenvolvimento
-- Agente Analista (KPIs, relatórios, dashboards)
-- Agente Cientista (ML, previsões, anomalias)
-- Agente LLM (chat natural, SQL, RAG)
 - Camada `processed/` com transformações avançadas
+- Mais modelos Prophet para outros produtos
+- Embeddings com HuggingFace (quando tiver internet)
+
+---
+
+## [1.8.0] - 2026-02-04 🤖 SISTEMA DE IA COM RAG
+
+### 🎉 Marco Principal
+**IA Conversacional com RAG** - Chat que busca na documentação e responde perguntas sobre o negócio
+
+### ✅ Adicionado
+
+#### 1. Sistema de Agentes Autônomos
+- `src/agents/base.py` - Classe base para agentes com LLM (Groq)
+- `src/agents/orchestrator/agent.py` - Orquestrador principal
+- `scripts/chat_ia.py` - Script de chat interativo
+
+#### 2. Tools do LLM
+- `forecast_demand` - Previsão de demanda (Prophet)
+- `get_kpis` - KPIs de vendas/compras/estoque
+- `search_documentation` - Busca RAG na documentação
+
+#### 3. RAG (Retrieval Augmented Generation)
+- `src/agents/shared/rag/embeddings.py` - TF-IDF offline
+- `src/agents/shared/rag/vectorstore.py` - Armazenamento FAISS-like
+- `src/agents/shared/rag/retriever.py` - Interface de busca
+
+#### 4. Treinamento de Modelos
+- `scripts/treinar_modelos.py` - Script de treinamento Prophet
+- Modelo treinado para produto 261301 (MOLA PATIM FREIO)
+
+#### 5. Organização de Arquivos
+- Seção "ORGANIZAÇÃO DE ARQUIVOS" no CLAUDE.md
+- Pastas: `docs/investigacoes/`, `docs/bugs/`, `output/divergencias/`
+
+### 🔧 Configuração
+- Modelo LLM: `qwen/qwen3-32b` (via Groq API)
+- 617 chunks de documentação indexados
+- RAG funciona 100% offline (TF-IDF)
+
+### 📖 Como Usar
+```bash
+# Pergunta direta
+python scripts/chat_ia.py "Qual o faturamento do mês?"
+
+# Chat interativo
+python scripts/chat_ia.py
+```
 
 ---
 
