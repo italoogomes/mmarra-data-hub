@@ -72,6 +72,17 @@ python scripts/chat_ia.py "Qual o faturamento do mês?"
 - `output/curl_*.txt` → `output/divergencias/2026-*_*.txt`
 - `docs/bugs/BUG_*.md` → `docs/bugs/2026-*_*.md`
 
+#### 5. Documentação Técnica
+
+**Arquivos criados/atualizados em docs/agentes/:**
+- `docs/agentes/llm.md` - Documentação completa do Agente LLM/Orquestrador
+  - Como configurar Groq
+  - Como usar o chat (scripts/chat_ia.py)
+  - Tools disponíveis (RAG, forecast, KPIs)
+  - Sistema RAG detalhado
+  - Troubleshooting
+- `docs/agentes/README.md` - Atualizado com status operacional do Cientista e LLM
+
 ### 📦 Commits Realizados
 
 1. `5a119df` - feat: Implementar sistema de agentes autônomos com Groq

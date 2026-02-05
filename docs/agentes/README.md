@@ -19,8 +19,8 @@ Agentes são **módulos Python permanentes** que executam tarefas automatizadas 
 |--------|--------|----------|--------|
 | [**Engenheiro**](engineer.md) | ETL: Sankhya → Data Lake | ❌ Não | ✅ Operacional |
 | **Analista** | KPIs, relatórios, dashboards | ❌ Não | 📋 Futuro |
-| **Cientista** | ML, previsões, anomalias | ❌ Não | 📋 Futuro |
-| **LLM** | Chat natural, SQL, RAG | ✅ Sim | 📋 Futuro |
+| [**Cientista**](scientist.md) | ML, previsões, anomalias | ❌ Não | ✅ Operacional |
+| [**LLM**](llm.md) | Chat natural, tools, RAG | ✅ Sim | ✅ Operacional |
 
 ---
 
@@ -30,27 +30,34 @@ Agentes são **módulos Python permanentes** que executam tarefas automatizadas 
 src/agents/
 ├── __init__.py
 │
-├── engineer/          # 🔧 Agente Engenheiro ✅
+├── engineer/              # 🔧 Agente Engenheiro ✅
 │   ├── extractors/
 │   ├── transformers/
 │   ├── loaders/
 │   ├── orchestrator.py
 │   └── scheduler.py
 │
-├── analyst/           # 📈 Agente Analista (futuro)
+├── analyst/               # 📈 Agente Analista (futuro)
 │   ├── kpis.py
 │   ├── reports.py
 │   └── dashboards.py
 │
-├── scientist/         # 🔬 Agente Cientista (futuro)
-│   ├── forecasting.py
-│   ├── anomaly.py
-│   └── clustering.py
+├── scientist/             # 🔬 Agente Cientista ✅
+│   ├── forecasting/       # Prophet (previsao demanda)
+│   ├── anomaly/           # Isolation Forest
+│   ├── clustering/        # K-Means (clientes/produtos)
+│   └── utils/             # Feriados, metricas
 │
-└── llm/               # 🤖 Agente LLM (futuro)
-    ├── chat.py
-    ├── sql_generator.py
-    └── rag/
+├── orchestrator/          # 🤖 Agente LLM ✅
+│   ├── config.py          # Configuracoes Groq
+│   ├── agent.py           # Orquestrador principal
+│   └── tools.py           # Tools (forecast, KPIs)
+│
+└── shared/
+    └── rag/               # 📚 Sistema RAG ✅
+        ├── embeddings.py  # TF-IDF
+        ├── vectorstore.py # Busca vetorial
+        └── retriever.py   # Interface de busca
 ```
 
 ---
@@ -67,12 +74,39 @@ orchestrator = Orchestrator()
 results = orchestrator.run_full_pipeline()
 ```
 
+### Agente Cientista
+
+```python
+from src.agents.scientist import DemandForecastModel
+
+model = DemandForecastModel()
+model.fit(df_vendas, codprod=12345)
+resultado = model.get_forecast_summary(periods=30)
+```
+
+### Agente LLM (Chat)
+
+```bash
+# Chat interativo
+python scripts/chat_ia.py
+```
+
+```python
+from src.agents.orchestrator import OrchestratorAgent
+
+agent = OrchestratorAgent()
+resposta = agent.ask("Quanto vendemos essa semana?")
+```
+
 ### Via CLI
 
 ```bash
 # Engenheiro
 python -m src.agents.engineer.orchestrator
 python -m src.agents.engineer.scheduler --run-once
+
+# Chat IA
+python scripts/chat_ia.py
 ```
 
 ---
@@ -84,13 +118,14 @@ python -m src.agents.engineer.scheduler --run-once
 | Engenheiro | requests, pandas, pyarrow |
 | Analista | pandas, plotly, jinja2 |
 | Cientista | scikit-learn, prophet |
-| LLM | langchain, openai |
+| LLM | langchain, langchain-groq |
+| RAG | scikit-learn (TF-IDF) |
 
 ---
 
 ## 📚 Documentação
 
-- [Agente Engenheiro](engineer.md)
+- [Agente Engenheiro](engineer.md) - ETL Sankhya -> Data Lake
 - Agente Analista (em breve)
-- Agente Cientista (em breve)
-- Agente LLM (em breve)
+- [Agente Cientista](scientist.md) - ML: Prophet, Isolation Forest, K-Means
+- [Agente LLM](llm.md) - Chat com Groq + RAG
