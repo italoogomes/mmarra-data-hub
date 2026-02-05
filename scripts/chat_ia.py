@@ -10,7 +10,13 @@ Ou para pergunta direta:
 """
 
 import sys
+import os
 from pathlib import Path
+
+# Configurar encoding para Windows
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding='utf-8')
+    os.system('chcp 65001 > nul 2>&1')
 
 # Adicionar src ao path
 ROOT_DIR = Path(__file__).parent.parent
