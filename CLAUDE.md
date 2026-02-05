@@ -42,6 +42,43 @@
 
 ---
 
+## 📁 ORGANIZAÇÃO DE ARQUIVOS - SEMPRE SEGUIR
+
+### Onde Salvar Cada Tipo de Arquivo
+
+| Tipo | Pasta | Padrão de Nome | Exemplo |
+|------|-------|----------------|---------|
+| Mapeamento de tabelas | `docs/de-para/sankhya/` | `[tabela].md` | `tgfcab.md` |
+| Investigações/Descobertas | `docs/investigacoes/` | `YYYY-MM-DD_[assunto].md` | `2026-02-04_fluxo_wms.md` |
+| Bugs/Problemas encontrados | `docs/bugs/` | `YYYY-MM-DD_[descricao].md` | `2026-02-04_cfop_errado.md` |
+| Queries SQL úteis | `queries/[modulo]/` | `[descricao].sql` | `queries/compras/pendentes.sql` |
+| Relatórios gerados | `output/reports/` | `YYYY-MM-DD_[nome].html` | `2026-02-04_vendas_semana.html` |
+| Divergências/Erros de dados | `output/divergencias/` | `YYYY-MM-DD_[descricao].txt` | `2026-02-04_precos_errados.txt` |
+| Dados extraídos | `src/data/raw/[modulo]/` | `[tabela].parquet` | `src/data/raw/vendas/vendas.parquet` |
+| Modelos treinados | `src/agents/scientist/models/` | `[tipo]/[nome].pkl` | `demand/produto_1001.pkl` |
+
+### Regras Obrigatórias de Organização
+
+1. **SEMPRE** usar data no início (YYYY-MM-DD) para investigações, bugs, relatórios e divergências
+2. **SEMPRE** salvar descobertas em `docs/investigacoes/`
+3. **SEMPRE** salvar problemas encontrados em `docs/bugs/`
+4. **SEMPRE** salvar queries úteis em `queries/[modulo]/`
+5. **NUNCA** criar pastas novas sem documentar aqui
+6. **SEMPRE** atualizar `PROGRESSO_SESSAO.md` com o que descobriu
+
+### Para RAG/Aprendizado da IA
+
+A IA aprende consultando estas pastas:
+- `docs/de-para/` → Estrutura das tabelas
+- `docs/investigacoes/` → Descobertas anteriores
+- `docs/bugs/` → Problemas conhecidos
+- `queries/` → Queries que funcionam
+- `output/divergencias/` → Erros já identificados
+
+**IMPORTANTE:** Sempre que descobrir algo novo, documente na pasta correta para a IA aprender!
+
+---
+
 ## 🤖 ARQUITETURA: AGENTES 100% AUTÔNOMOS (CRÍTICO 🔥)
 
 ### Conceito Principal
