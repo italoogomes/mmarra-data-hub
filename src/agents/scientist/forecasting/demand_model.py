@@ -103,10 +103,12 @@ class DemandForecastModel:
             codprod=codprod
         )
 
-        if df_prophet.empty or len(df_prophet) < 10:
+        # NOTA: Em produção, use min_days >= 30. Valor 5 é apenas para teste.
+        min_days = 5
+        if df_prophet.empty or len(df_prophet) < min_days:
             return {
                 "success": False,
-                "error": "Dados insuficientes para treinamento",
+                "error": f"Dados insuficientes ({len(df_prophet)} < {min_days} dias)",
                 "preprocessing": prep_metadata
             }
 

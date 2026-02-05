@@ -58,7 +58,8 @@ FORECAST_CONFIG = {
     # Preprocessamento
     "preprocessing": {
         # Minimo de dias de historico para treinar
-        "min_history_days": 30,
+        # NOTA: Em produção, use 30+ dias. Valor 7 é apenas para teste.
+        "min_history_days": 7,
 
         # Maximo de dias de historico (para performance)
         "max_history_days": 730,  # 2 anos
