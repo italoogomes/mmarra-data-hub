@@ -20,6 +20,7 @@ from typing import Optional, Dict, Any
 
 from ..base import BaseAgent
 from ..llm.tools import forecast_demand, get_kpis
+from ..shared.rag import DocumentRetriever, search_documentation
 
 logger = logging.getLogger(__name__)
 
@@ -30,34 +31,49 @@ SOBRE A EMPRESA:
 - Distribuidora de autopeças para caminhões e carretas
 - Trabalha com milhares de SKUs (peças)
 - Precisa gerenciar estoque, vendas e compras
+- Usa Sankhya ERP como sistema principal
 
 SEU TRABALHO:
 - Responder perguntas sobre o negócio
 - Usar ferramentas para obter dados quando necessário
+- BUSCAR NA DOCUMENTAÇÃO quando precisar de informações técnicas
 - Explicar resultados de forma clara em português
 
 FERRAMENTAS DISPONÍVEIS:
-1. forecast_demand(codprod, periods) - Previsão de vendas de um produto
+
+1. search_documentation(query) - BUSCA NA BASE DE CONHECIMENTO
+   - Use PRIMEIRO quando precisar de informações sobre:
+     * Estrutura de tabelas do Sankhya (campos, tipos, relacionamentos)
+     * Significado de campos (ex: TIPMOV, CODTIPOPER)
+     * Bugs e problemas conhecidos
+     * Queries SQL úteis
+     * Documentação do WMS
+     * Como fazer operações específicas
+   - query: o que você quer saber (em português)
+
+2. forecast_demand(codprod, periods) - Previsão de vendas de um produto
    - Use quando perguntarem sobre previsão, demanda futura, vendas previstas
    - codprod: código do produto (número)
    - periods: dias para prever (padrão 30)
 
-2. get_kpis(modulo, periodo) - Métricas e indicadores
+3. get_kpis(modulo, periodo) - Métricas e indicadores
    - Use quando perguntarem sobre faturamento, margem, KPIs
    - modulo: "vendas", "compras" ou "estoque"
    - periodo: "mes_atual", "mes_anterior" ou "ano"
 
 REGRAS:
 - Sempre responda em português brasileiro
-- Use as ferramentas quando precisar de dados específicos
+- Use search_documentation PRIMEIRO para perguntas técnicas
+- Use as outras ferramentas quando precisar de dados específicos
 - Explique os resultados de forma clara e objetiva
 - Se não souber algo, diga que não tem a informação
 - Não invente dados - use apenas o que as ferramentas retornarem
 
 EXEMPLOS:
+- "O que significa TIPMOV?" → Use search_documentation("significado campo TIPMOV")
+- "Quais bugs existem no WMS?" → Use search_documentation("bugs problemas WMS")
 - "Qual a previsão de vendas do produto 261301?" → Use forecast_demand
 - "Qual o faturamento do mês?" → Use get_kpis(modulo="vendas")
-- "Como está o estoque?" → Use get_kpis(modulo="estoque")
 """
 
 
@@ -80,8 +96,8 @@ class OrchestratorAgent(BaseAgent):
             model: Modelo LLM (default: llama-3.1-70b-versatile)
             temperature: Temperatura do modelo
         """
-        # Configurar tools
-        tools = [forecast_demand, get_kpis]
+        # Configurar tools (RAG primeiro para priorizar busca na documentação)
+        tools = [search_documentation, forecast_demand, get_kpis]
 
         super().__init__(
             name="Orquestrador",
@@ -91,7 +107,7 @@ class OrchestratorAgent(BaseAgent):
             temperature=temperature
         )
 
-        logger.info("Orquestrador inicializado com ferramentas de previsão e KPIs")
+        logger.info("Orquestrador inicializado com RAG, previsão e KPIs")
 
     def ask(self, question: str) -> str:
         """
