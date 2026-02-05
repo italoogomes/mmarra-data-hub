@@ -288,6 +288,7 @@ Orquestrador pensa:
 
 ---
 
+
 ## 🔄 Fluxo de Comunicação Entre Agentes
 
 ```
